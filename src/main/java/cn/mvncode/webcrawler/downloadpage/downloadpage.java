@@ -4,6 +4,7 @@ import cn.mvncode.webcrawler.Request;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -12,6 +13,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,11 +23,33 @@ import java.util.regex.Pattern;
  */
 public class downloadpage {
 
+    private static final String DefaultCharSet = "utf-8";
+
     /**
      * @return requestConfig
      */
-    private RequestConfig getRequestConfig () {
-        return RequestConfig.DEFAULT;
+    private RequestConfig.Builder getRequestConfig () {
+        return RequestConfig.custom()
+                .setConnectTimeout(5000)//连接超时
+                .setSocketTimeout(5000)//socket超时
+                .setConnectionRequestTimeout(5000)//请求超时
+                .setCookieSpec(CookieSpecs.STANDARD);//管理cookie规范
+    }
+
+    /**
+     * 伪装请求
+     *
+     * @return Map<></>
+     */
+    private Map<String, String> getHeaders () {
+        Map<String, String> headers = new HashMap<String, String>();
+        headers.put("Accept", "text/html");
+        headers.put("Accept-Charset", "utf-8");
+        headers.put("Accept-Encoding", "gzip");
+        headers.put("Accept-Language", "en-US,en");
+        headers.put("User_Agent",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.160 Safari/537.22");
+        return headers;
     }
 
     /**
@@ -35,7 +60,10 @@ public class downloadpage {
      */
     private HttpUriRequest getHttpUriRequest (Request request) {
         RequestBuilder requestBuilder = selectRequestMethod(request).setUri(request.getUrl());
-        requestBuilder.setConfig(getRequestConfig());
+        for (Map.Entry<String, String> headerEntry : getHeaders().entrySet()) {
+            requestBuilder.addHeader(headerEntry.getKey(), headerEntry.getValue());
+        }
+        requestBuilder.setConfig(getRequestConfig().build());
         return requestBuilder.build();
     }
 
@@ -114,6 +142,7 @@ public class downloadpage {
 
     /**
      * 获取response消息主体
+     *
      * @param request
      * @return
      * @throws IOException
@@ -121,15 +150,17 @@ public class downloadpage {
     public String getContent (Request request) throws IOException {
         CloseableHttpResponse httpResponse = getResponse(request);
         byte[] contentBytes = IOUtils.toByteArray(httpResponse.getEntity().getContent());
-//        String string = new String(contentBytes);
-//        System.out.println(string);
+        /*  test  */
+        String string = new String(contentBytes);
+        System.out.println(string);
+        /*  test  */
         //关闭客户端
         httpResponse.close();
         String charset = getHtmlCharset(httpResponse);
         if (charset != null) {
             return new String(contentBytes, charset);
         } else {
-            return new String(contentBytes);
+            return new String(contentBytes, DefaultCharSet);
         }
     }
 

@@ -28,9 +28,9 @@ public class httpClientFactory {
                 .build();
         poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager(registry);
         //路由基础的连接
-        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(100);
+        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(20);
         //最大连接数
-        poolingHttpClientConnectionManager.setMaxTotal(10);
+        poolingHttpClientConnectionManager.setMaxTotal(800);
     }
 
     /**
