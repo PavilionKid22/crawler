@@ -1,3 +1,4 @@
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -74,7 +75,7 @@ public class FirstPageCrawler {
         //从header获取charset
         Pattern patternForCharset = Pattern.compile("charset\\s*=\\s*['\"]*([^\\s;'\"]*)");
         String value = response.getEntity().getContentType().getValue();
-        System.out.println(value);
+//        System.out.println(value);
         Matcher matcher = patternForCharset.matcher(value);
         if (matcher.find()) {
             charset = matcher.group(1);
@@ -97,11 +98,13 @@ public class FirstPageCrawler {
         CloseableHttpClient httpClient = getClient();
         CloseableHttpResponse response = null;
         try {
+            //执行请求
             response = httpClient.execute(createGetMethod(url));
-            String charset = getEncoding(response);
-            System.out.println(charset);
+            //获得返回实体entity
             HttpEntity entity = response.getEntity();
             InputStream inputStream = entity.getContent();
+            byte[] bytes = IOUtils.toByteArray(inputStream);
+            System.out.println(bytes.length);
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             StringBuffer stringBuffer = new StringBuffer();
             String lineString = null;

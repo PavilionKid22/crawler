@@ -9,6 +9,7 @@ public class FirstPageCrawlerTest {
     @Test
     public void me () throws Exception {
         FirstPageCrawler.me().execute("https://www.baidu.com/");
+//        FirstPageCrawler.me().execute("http://blog.csdn.net/singit/article/details/62040688");
     }
 
 }
