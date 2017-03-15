@@ -10,6 +10,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -154,8 +155,10 @@ public class downloadpage {
         String string = new String(contentBytes);
         System.out.println(string);
         /*  test  */
-        //关闭客户端
-        httpResponse.close();
+        //确保连接关闭
+        if(httpResponse!=null){
+            EntityUtils.consume(httpResponse.getEntity());
+        }
         String charset = getHtmlCharset(httpResponse);
         if (charset != null) {
             return new String(contentBytes, charset);
