@@ -2,6 +2,7 @@ package cn.mvncode.webcrawler;
 
 import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,34 +15,33 @@ public class Page {
 
     private Request request;
 
-    private int statusCode;
-
-//    private boolean needCycleRetry;
-
-//    private String rawText;
-
-    private List<Request> targetRequest = new ArrayList<Request>();
+    private HttpResponse httpResponse;
 
     public Page () {
     }
 
-    public List<Request> getTargetRequest () {
-        return targetRequest;
+    public void setRequest (Request request) {
+        this.request = request;
     }
 
-    /**
-     * 添加待抓取url
-     * 未完成
-     * @param requests
-     */
-    public void addTargetRequest (List<String> requests) {
-        for (String s : requests) {
-            if (StringUtils.isBlank(s) || s.equals("#") || s.startsWith("javascript:")) {
-                continue;
-            }
+    public HttpResponse getHttpResponse () {
+        return httpResponse;
+    }
 
-        }
+    public void setHttpResponse (HttpResponse httpResponse) {
+        this.httpResponse = httpResponse;
+    }
+
+    public Request getRequest () {
+        return request;
     }
 
 
+    @Override
+    public String toString () {
+        return "Page{" +
+                "request=" + request +
+                ", httpResponse=" + httpResponse +
+                '}';
+    }
 }

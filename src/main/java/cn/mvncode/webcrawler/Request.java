@@ -3,6 +3,7 @@ package cn.mvncode.webcrawler;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * 对URL的封装，一个url对应一个request
@@ -16,6 +17,10 @@ public class Request implements Serializable {
      */
     private static final long serialVersionUID = 1L;
 
+    public static final String CYCLE_TRIED_TIMES = "_cycle_tried_times";
+    public static final String STATUS_CODE = "statusCode";
+    public static final String PROXY = "proxy";
+
     private String url;
 
     private String method;
@@ -25,12 +30,34 @@ public class Request implements Serializable {
      */
     private Map<String, Object> extras;
 
+    /**
+     * 存储头信息
+     * 伪装请求
+     */
+    private static Map<String, String> headers = new HashMap<String, String>();
+
+    static {
+        headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        headers.put("Accept-Encoding", "gzip, deflate, sdch");
+        headers.put("Accept-Language", "zh-CN,zh;q=0.8");
+        headers.put("User_Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
+    }
+
     public Request () {
 
     }
 
     public Request (String url) {
         this.url = url;
+    }
+
+    public Map<String, String> getHeaders () {
+        return headers;
+    }
+
+    public void putHeaders (String key, String value) {
+        headers.put(key, value);
     }
 
     public Object getExtra (String key) {

@@ -61,6 +61,10 @@ public class CrawlerSet {
         DEFAULT_STATUS_CODE_SET.add(200);
     }
 
+    public static CrawlerSet set(){
+        return new CrawlerSet();
+    }
+
     /**
      * 从网址中添加Cookie
      *
@@ -282,7 +286,11 @@ public class CrawlerSet {
         return cycleRetryTimes;
     }
 
-
+    /**
+     * 设置循环重试次数
+     * @param cycleRetryTimes
+     * @return
+     */
     public CrawlerSet setCycleRetryTimes (int cycleRetryTimes) {
         this.cycleRetryTimes = cycleRetryTimes;
         return this;
@@ -295,6 +303,10 @@ public class CrawlerSet {
      */
     public void setHttpProxy (HttpHost httpProxy) {
         this.httpProxy = httpProxy;
+    }
+
+    public HttpHost getHttpProxy () {
+        return httpProxy;
     }
 
     public boolean isUseGzip () {
