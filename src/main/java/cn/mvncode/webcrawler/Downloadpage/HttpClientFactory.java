@@ -1,8 +1,6 @@
-package cn.mvncode.webcrawler.downloadpage;
+package cn.mvncode.webcrawler.Downloadpage;
 
 import cn.mvncode.webcrawler.CrawlerSet;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
@@ -18,7 +16,14 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 import org.apache.http.impl.cookie.BasicClientCookie;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.net.ProxySelector;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 
 /**
@@ -26,7 +31,7 @@ import java.util.Map;
  * <p>
  * Created by Pavilion on 2017/3/14.
  */
-public class httpClientFactory {
+public class HttpClientFactory {
 
     private static PoolingHttpClientConnectionManager poolingHttpClientConnectionManager;
 
@@ -34,17 +39,61 @@ public class httpClientFactory {
      * 初始化连接池
      */
     static {
-        ConnectionSocketFactory plainsf = PlainConnectionSocketFactory.getSocketFactory();//直连
-        LayeredConnectionSocketFactory sslsf = SSLConnectionSocketFactory.getSocketFactory();//安全连接
+        // 设置协议http和https对应的处理socket链接工厂的对象
+        ConnectionSocketFactory plainsf = PlainConnectionSocketFactory.INSTANCE;//直连
+        LayeredConnectionSocketFactory sslsf = buildSSLConnectionSocketFactory();//安全连接
         Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", plainsf)
                 .register("https", sslsf)
                 .build();
         poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager(registry);
         //路由基础的连接
-        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(20);
-        //最大连接数
-        poolingHttpClientConnectionManager.setMaxTotal(800);
+        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(100);
+    }
+
+    /**
+     * 配置ssl
+     *
+     * @return
+     */
+    private static SSLConnectionSocketFactory buildSSLConnectionSocketFactory () {
+        try {
+            //优先绕过安全证书
+            return new SSLConnectionSocketFactory(createIgnoreVerifySSL());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+        return SSLConnectionSocketFactory.getSocketFactory();
+    }
+
+    /**
+     * SSL绕过验证
+     *
+     * @return
+     */
+    private static SSLContext createIgnoreVerifySSL () throws NoSuchAlgorithmException, KeyManagementException {
+        // 实现一个X509TrustManager接口，用于绕过验证，不用修改里面的方法
+        X509TrustManager trustManager = new X509TrustManager() {
+            @Override
+            public void checkClientTrusted (X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public void checkServerTrusted (X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers () {
+                return null;
+            }
+        };
+        SSLContext sc = SSLContext.getInstance("SSLv3");
+        sc.init(null, new TrustManager[]{trustManager}, null);
+        return sc;
     }
 
     /**
@@ -79,18 +128,24 @@ public class httpClientFactory {
         }
 
         //解决post/redirect/post 302跳转问题
-//        httpClientBuilder.setRedirectStrategy();
+        //HttpClient自动处理所有类型的重定向,通过POST和PUT请求的303 redirect会被转换成GET请求
+        httpClientBuilder.setRedirectStrategy(new CustomRedirectStrategy());
 
         //Socket设置
         SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(5000).setSoKeepAlive(true).setTcpNoDelay(true).build();
         httpClientBuilder.setDefaultSocketConfig(socketConfig);
         poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
 
-        //代理设置(使用JRE代理选择器来获取代理配置)
-        SystemDefaultRoutePlanner routePlanner = new SystemDefaultRoutePlanner(
-                ProxySelector.getDefault()
-        );
-        httpClientBuilder.setRoutePlanner(routePlanner);
+        //错误恢复机制
+        if(crawlerSet!=null){
+            httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(crawlerSet.getRetryTimes(),true));
+        }
+
+//        //代理设置(使用JRE代理选择器来获取代理配置)
+//        SystemDefaultRoutePlanner routePlanner = new SystemDefaultRoutePlanner(
+//                ProxySelector.getDefault()
+//        );
+//        httpClientBuilder.setRoutePlanner(routePlanner);
 
         //Cookie持久化设置
         generateCookie(httpClientBuilder, crawlerSet);

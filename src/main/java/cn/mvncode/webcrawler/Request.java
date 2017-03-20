@@ -44,8 +44,13 @@ public class Request implements Serializable {
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
     }
 
-    public Request () {
+    public void setUrl (String url) {
+        this.url = url;
+    }
 
+    public Request () {
+        url = null;
+        method = null;
     }
 
     public Request (String url) {
@@ -75,16 +80,16 @@ public class Request implements Serializable {
         return this;
     }
 
-    @Override
-    public boolean equals (Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-
-        Request request = (Request) obj;
-        if (!url.equals(request.url)) return false;
-
-        return true;
-    }
+//    @Override
+//    public boolean equals (Object obj) {
+//        if (this == obj) return true;
+//        if (obj == null || getClass() != obj.getClass()) return false;
+//
+//        Request request = (Request) obj;
+//        if (!url.equals(request.getUrl())) return false;
+//
+//        return true;
+//    }
 
     @Override
     public int hashCode () {
@@ -123,4 +128,5 @@ public class Request implements Serializable {
                 ", extras=" + extras +
                 '}';
     }
+
 }

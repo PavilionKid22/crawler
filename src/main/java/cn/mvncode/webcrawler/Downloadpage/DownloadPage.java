@@ -1,11 +1,11 @@
-package cn.mvncode.webcrawler.downloadpage;
+package cn.mvncode.webcrawler.Downloadpage;
 
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Request;
+import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.AuthSchemes;
@@ -16,22 +16,22 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by Pavilion on 2017/3/14.
  */
-public class downloadpage {
+public class DownloadPage {
 
-    private static final String DefaultCharSet = "utf-8";
+    private static final String DefaultCharSet = Charset.defaultCharset().name();
 
     /**
      * 下载网页并保存
@@ -41,52 +41,49 @@ public class downloadpage {
     public Page download (Request request, CrawlerSet crawlerSet) {
 
         //获取客户端
-        CloseableHttpClient httpClient = httpClientFactory.getClient(crawlerSet);
+        CloseableHttpClient httpClient = HttpClientFactory.getClient(crawlerSet);
         //获取请求
         HttpUriRequest httpUriRequest = getHttpUriRequest(request, crawlerSet);
         //获取response
-        CloseableHttpResponse httpResponse = null;
-        httpResponse = getResponse(httpClient, httpUriRequest);
+        CloseableHttpResponse httpResponse = getResponse(httpClient, httpUriRequest);
+
+        Page page = null;
+        try {
+            page = handleResponse(request, httpResponse, crawlerSet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         /*    测试    */
-        System.out.println("*General");
-        System.out.println("Request URL: "+httpUriRequest.getURI());
-        //获取状态码
-        int statusCode = httpResponse.getStatusLine().getStatusCode();
-        request.putExtras(Request.STATUS_CODE, statusCode);
-        System.out.println("Status Code: "+statusCode);
-        System.out.println("");
-
-        System.out.println("*Response Headers");
-        Header[] responseHeaders = httpResponse.getAllHeaders();
-        for (Header header:responseHeaders) {
-            System.out.println(header);
-        }
-        System.out.println("");
-
-        System.out.println("*Request Headers");
-        Header[] headers1 = httpUriRequest.getAllHeaders();
-        for (Header header : headers1) {
-            System.out.println(header);
-        }
-        System.out.println("");
-
-//        System.out.println("Priview");
-//        try {
-//            String content = getContent(httpResponse);
-//            System.out.println(content);
-//        } catch (IOException e) {
-//            e.printStackTrace();
+//        System.out.println("*General");
+//        System.out.println("Request URL: " + httpUriRequest.getURI());
+//        //获取状态码
+//        int statusCode = httpResponse.getStatusLine().getStatusCode();
+//        request.putExtras(Request.STATUS_CODE, statusCode);
+//        System.out.println("Status Code: " + statusCode);
+//        System.out.println("");
+//
+//        System.out.println("*Response Headers");
+//        Header[] responseHeaders = httpResponse.getAllHeaders();
+//        for (Header header : responseHeaders) {
+//            System.out.println(header);
 //        }
+//        System.out.println("");
+//
+//        System.out.println("*Request Headers");
+//        Header[] headers1 = httpUriRequest.getAllHeaders();
+//        for (Header header : headers1) {
+//            System.out.println(header);
+//        }
+//        System.out.println(httpResponse.getEntity().getContentType());
+//        System.out.println(httpResponse.getEntity().getContentType().getValue());
+//        System.out.println(httpResponse.getEntity().getContentType().getName());
+//        System.out.println("");
 
-        Page page = new Page();
-        page.setRequest(request);
-        page.setHttpResponse(httpResponse);
 
         return page;
 
     }
-
 
     /**
      * 请求基本设置
@@ -158,22 +155,36 @@ public class downloadpage {
      * @param httpResponse
      * @return charset
      */
-    private String getHtmlCharset (HttpResponse httpResponse) {
-        String charset = null;
+    private String getHtmlCharset (HttpResponse httpResponse) throws IOException {
+        String charset = DefaultCharSet;
         //从header获取charset
-        Pattern patternForCharset = Pattern.compile("charset\\s*=\\s*['\"]*([^\\s;'\"]*)");
         String value = httpResponse.getEntity().getContentType().getValue();
-//        System.out.println(value);
-        Matcher matcher = patternForCharset.matcher(value);
-        if (matcher.find()) {
-            charset = matcher.group(1);
-            if (Charset.isSupported(charset)) {//判断是否为编码格式
-                return charset;
-            }
+        charset = UrlUtils.getCharset(value);
+        if (StringUtils.isNotBlank(charset)) {
+            return charset;
         }
         //从meta获取charset
-
-
+        byte[] contentBytes = IOUtils.toByteArray(httpResponse.getEntity().getContent());
+        String content = new String(contentBytes, DefaultCharSet);
+        if (StringUtils.isNotEmpty(content)) {
+            Document document = Jsoup.parse(content);
+            Elements metas = document.select("meta");
+            for (Element meta : metas) {
+                String metaContent = meta.attr("content");
+                String metaCharset = meta.attr("charset");
+                //<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+                if (metaContent.indexOf("charset") != -1) {
+                    metaContent = metaContent.substring(metaContent.indexOf("charset"), metaContent.length());
+                    charset = metaContent.split("=")[1];
+                    break;
+                }
+                //<meta charset="UTF-8" />
+                else if (StringUtils.isNotEmpty(metaCharset)) {
+                    charset = metaCharset;
+                    break;
+                }
+            }
+        }
         return charset;
     }
 
@@ -197,26 +208,52 @@ public class downloadpage {
      * 获取response消息主体
      *
      * @param httpResponse
+     * @param htmlCharset
      * @return
      * @throws IOException
      */
-    private String getContent (CloseableHttpResponse httpResponse) throws IOException {
-        byte[] contentBytes = IOUtils.toByteArray(httpResponse.getEntity().getContent());
-//        /*  test  */
-//        String string = new String(contentBytes);
-//        System.out.println(string);
-//        /*  test  */
+    private String getContent (HttpResponse httpResponse, String htmlCharset) throws IOException {
+        if (htmlCharset == null) {
+            byte[] contentBytes = IOUtils.toByteArray(httpResponse.getEntity().getContent());
+            String charset = getHtmlCharset(httpResponse);
+            if (charset != null) {
+                return new String(contentBytes, charset);
+            } else {
+                return new String(contentBytes, DefaultCharSet);
+            }
+        } else {
+            return IOUtils.toString(httpResponse.getEntity().getContent(), htmlCharset);
+        }
+    }
+
+    /**
+     * 保存网页到page
+     *
+     * @param request
+     * @param httpResponse
+     * @return
+     * @throws IOException
+     */
+    private Page handleResponse (Request request, HttpResponse httpResponse, CrawlerSet set) throws IOException {
+
+        String charset = getHtmlCharset(httpResponse);
+        String content = getContent(httpResponse, charset);
+        Page page = new Page();
+
+        page.setCharset(charset);
+        page.setRequest(request);
+        page.setHttpResponse(httpResponse);
+        page.setPlainText(content);
+        page.setStatusCode(httpResponse.getStatusLine().getStatusCode());
+        page.setUrl(request.getUrl());
+        page.setCrawlerSet(set);
+
         //确保连接关闭
         if (httpResponse != null) {
             EntityUtils.consume(httpResponse.getEntity());
         }
-        String charset = getHtmlCharset(httpResponse);
-        if (charset != null) {
-            return new String(contentBytes, charset);
-        } else {
-            return new String(contentBytes, DefaultCharSet);
-        }
-    }
 
+        return page;
+    }
 
 }

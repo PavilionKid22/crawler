@@ -65,6 +65,11 @@ public class CrawlerSet {
         return new CrawlerSet();
     }
 
+    public static CrawlerSet setByDefault(){
+        return CrawlerSet.set().setTimeOut(5000);
+    }
+
+
     /**
      * 从网址中添加Cookie
      *
@@ -203,15 +208,6 @@ public class CrawlerSet {
      */
     public Set<Integer> getAcceptStatusCode () {
         return acceptStatusCode;
-    }
-
-    /**
-     * 获取初始请求链接集
-     *
-     * @return
-     */
-    public List<String> getStartUrls () {
-        return UrlUtils.convertToUrls(startRequests);
     }
 
     public List<Request> getStartRequests () {
