@@ -1,5 +1,6 @@
 package cn.mvncode.webcrawler.PageHandler;
 
+import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
 import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Request;
@@ -29,63 +30,65 @@ public class PageResponseHandler {
      *
      * @return result
      */
-    public ResultItem getHandler (Page page) throws IOException {
-        resultItem.setRequest(page.getRequest());
-        resultItem.setCrawlerSet(page.getCrawlerSet());
-        return new PageResponseHandler().handleResponse(page);
+    public ResultItem getHandler (Request seek, CrawlerSet set) throws IOException {
+        return new PageResponseHandler().handleResponse(seek, set);
     }
 
 
     /**
-     * 处理网页
+     * 处理网页(beta0.1.0)
      *
-     * @param initPage
+     * @param seek
+     * @param set
      * @return
      * @throws IOException
      */
-    public ResultItem handleResponse (Page initPage) throws IOException {
+    public ResultItem handleResponse (Request seek, CrawlerSet set) throws IOException {
 
-        resultItem = grapProcess(initPage);
+        //初始化下载器
+        DownloadPage downloadPage = new DownloadPage();
+        Page page = downloadPage.download(seek, set);
+        String refer = page.getUrl();
+
+        while (!page.getTargetUrls().isEmpty()) {
+
+            StatusLine statusLine = page.getHttpResponse().getStatusLine();
+            if (statusLine.getStatusCode() >= 300) {
+                break;
+            }
+            //格式化html
+            Document document = Jsoup.parse(page.getPlainText());
+            //获取内容
+            Map<String, String> comments = getComments(document);
+            for (Map.Entry<String, String> entry : comments.entrySet()) {
+                resultItem.addComment(entry.getKey(), entry.getValue());
+            }
+            /*  测试  */
+            System.out.println("Request URL: " + page.getUrl());
+            System.out.println("Status Code: " + page.getStatusCode());
+            /*  测试  */
+            //获取下一页url
+            Request newRequest = getUrl(document, refer);
+            //获取refer
+            newRequest.setRefer(page.getUrl());
+            //删除当前处理url
+            page.removeTargetUrl(page.getRequest());
+            //加载新页面
+            page = downloadPage.download(newRequest, set);
+            //抓取间隔
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
 
         return resultItem;
     }
 
     /**
-     * 抓取进程
-     * 递归调用
-     *
-     * @param page
-     */
-    private ResultItem grapProcess (Page page) throws HttpResponseException {
-
-        StatusLine statusLine = page.getHttpResponse().getStatusLine();
-        if (statusLine.getStatusCode() >= 300) {
-//            throw new HttpResponseException(statusLine.getStatusCode(), statusLine.getReasonPhrase());
-            return resultItem;
-        }
-        //格式化html
-        Document document = Jsoup.parse(page.getPlainText());
-        //获取内容
-        Map<String, String> comments = getComments(document);
-        for (Map.Entry<String, String> entry : comments.entrySet()) {
-            resultItem.addComment(entry.getKey(), entry.getValue());
-//            System.out.println(entry.getKey() + ":" + entry.getValue() + "\n");
-        }
-        //获取下一页url
-        Request request = getUrl(document, page.getUrl());
-        System.out.println(request.getUrl());
-        if (!request.equals(resultItem.getRequest()) && request.getUrl() != null) {
-            resultItem.setRequest(request);
-            resultItem = resultItem.addTargetUrls(request);//存入容器
-            Page newPage = new DownloadPage().download(request, resultItem.getCrawlerSet());
-            resultItem = grapProcess(newPage);
-        }
-        return resultItem;
-    }
-
-
-    /**
-     * 提取网页中包含的所有链接
+     * 提取网页中包含的所有链接(beta0.1.0)
      *
      * @param document
      * @return
@@ -132,32 +135,14 @@ public class PageResponseHandler {
         Elements links = document.select("div#paginator");
         for (Element element : links) {
             Elements link = element.select("a[href].next");
+            int i = StringUtils.indexOf(refer, "?status=P", 1);
+            refer = StringUtils.substring(refer, 0, i);
             String newUrl = refer + "/" + link.attr("href");
             url.setUrl(newUrl);
 //            System.out.println(newUrl);
         }
 
         return url;
-    }
-
-    /**
-     * 通过key获取目标urls
-     *
-     * @param resultItem
-     * @param key
-     * @return
-     */
-    private String selectUrl (ResultItem resultItem, String key) {
-        Set<Request> targetUrls = resultItem.getTargetUrls();
-        String refer = resultItem.getRequest().getUrl();
-        String subUrl = UrlUtils.getSuburl(refer, targetUrls, key);
-        if (StringUtils.isEmpty(subUrl)) {
-            subUrl = refer + "/" + key;
-            return subUrl;
-        } else {
-            resultItem.deleteTargetUrls(new Request(subUrl));
-            return subUrl;
-        }
     }
 
     /**

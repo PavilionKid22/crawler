@@ -6,7 +6,9 @@ import cn.mvncode.webcrawler.PageHandler.PageResponseHandler;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
+import cn.mvncode.webcrawler.Utils.UrlUtils;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 
@@ -18,6 +20,8 @@ public class Console {
 
     private CrawlerSet set;
 
+    private PageResponseHandler pageResponseHandler;
+
     public Console (CrawlerSet set) {
         this.set = set;
     }
@@ -26,13 +30,14 @@ public class Console {
      * @param request
      */
     public void process (Request request) {
-        //下载网页
-        Page initPage = new DownloadPage().download(request, set);
+
+        //初始化构建
+        initComponent(request);
         //处理网页
-        PageResponseHandler pageResponseHandler = new PageResponseHandler();
+        pageResponseHandler = new PageResponseHandler();
         ResultItem result = null;
         try {
-            result = pageResponseHandler.getHandler(initPage);
+            result = pageResponseHandler.getHandler(request, set);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -40,6 +45,43 @@ public class Console {
         System.out.println(result.getComment().size());
         for (Map.Entry<String, String> view : result.getComment().entrySet()) {
             System.out.println(view.getKey() + ":" + view.getValue() + "\n");
+        }
+        //关闭构建
+        close();
+    }
+
+    /**
+     * 初始化构建(beta0.1.0)
+     * 未完成
+     *
+     * @param request
+     */
+    public void initComponent (Request request) {
+        if (request != null) {
+            set.setDomain(UrlUtils.getDomain(request.getUrl()));
+        }
+    }
+
+    /**
+     * 关闭io流
+     */
+    public void close () {
+        destroyEach(pageResponseHandler);
+    }
+
+
+    /**
+     * 销毁对象
+     *
+     * @param object
+     */
+    private void destroyEach (Object object) {
+        if (object instanceof Closeable) {//检查是否属于需要关闭类的实例
+            try {
+                ((Closeable) object).close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

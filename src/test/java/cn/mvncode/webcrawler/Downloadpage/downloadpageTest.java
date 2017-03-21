@@ -10,10 +10,10 @@ import org.junit.Test;
 public class downloadpageTest {
     @Test
     public void download () throws Exception {
-        new DownloadPage().download(new Request("http://www.cnblogs.com/yaowen/p/3757571.html"),
-                CrawlerSet.set().setRetryTimes(3).setTimeOut(5000));
-//        new Downloadpage().download(new Request("http://blog.csdn.net/ktlifeng/article/details/50858348"),
+//        new DownloadPage().download(new Request("http://www.cnblogs.com/yaowen/p/3757571.html"),
 //                CrawlerSet.set().setRetryTimes(3).setTimeOut(5000));
+        new DownloadPage().download(new Request("http://blog.csdn.net/ktlifeng/article/details/50858348"),
+                CrawlerSet.set().setRetryTimes(3).setTimeOut(5000));
     }
 
 }

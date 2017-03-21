@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -28,11 +29,27 @@ public class Page {
 
     private CrawlerSet crawlerSet;
 
+    private Set<Request> targetUrls = new HashSet<Request>();
+
     public Page () {
         plainText = null;
         url = null;
         statusCode = 0;
         charset = "utf-8";
+    }
+
+    public Page addTargetUrl(Request request){
+        targetUrls.add(request);
+        return this;
+    }
+
+    public Page removeTargetUrl(Request request){
+        targetUrls.remove(request);
+        return this;
+    }
+
+    public Set<Request> getTargetUrls () {
+        return targetUrls;
     }
 
     public CrawlerSet getCrawlerSet () {

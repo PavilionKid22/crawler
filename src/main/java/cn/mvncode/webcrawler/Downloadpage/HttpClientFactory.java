@@ -52,7 +52,7 @@ public class HttpClientFactory {
     }
 
     /**
-     * 配置ssl
+     * 配置ssl(stale0.1.0)
      *
      * @return
      */
@@ -69,7 +69,7 @@ public class HttpClientFactory {
     }
 
     /**
-     * SSL绕过验证
+     * SSL绕过验证(stable0.1.0)
      *
      * @return
      */
@@ -97,7 +97,7 @@ public class HttpClientFactory {
     }
 
     /**
-     * 获取默认客户端
+     * 获取默认客户端(stable0.1.0)
      *
      * @return
      */
@@ -106,7 +106,7 @@ public class HttpClientFactory {
     }
 
     /**
-     * 获得客户端
+     * 获得客户端(beta0.1.0)
      *
      * @return HttpClient
      */
@@ -137,8 +137,8 @@ public class HttpClientFactory {
         poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
 
         //错误恢复机制
-        if(crawlerSet!=null){
-            httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(crawlerSet.getRetryTimes(),true));
+        if (crawlerSet != null) {
+            httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(crawlerSet.getRetryTimes(), true));
         }
 
 //        //代理设置(使用JRE代理选择器来获取代理配置)
@@ -147,31 +147,20 @@ public class HttpClientFactory {
 //        );
 //        httpClientBuilder.setRoutePlanner(routePlanner);
 
-        //Cookie持久化设置
-        generateCookie(httpClientBuilder, crawlerSet);
+        //Cookie策略定制
+//        generateCookie(httpClientBuilder, crawlerSet);
 
         return httpClientBuilder.build();
     }
 
     /**
-     * 生成Cookie持久化
+     * 定制cookie策略(beta0.1.0)
      *
      * @param httpClientBuilder
      */
     private static void generateCookie (HttpClientBuilder httpClientBuilder, CrawlerSet crawlerSet) {
         CookieStore cookieStore = new BasicCookieStore();//持久化容器
-        for (Map.Entry<String, String> cookieEntry : crawlerSet.getDefaultCookies().entrySet()) {
-            BasicClientCookie cookie = new BasicClientCookie(cookieEntry.getKey(), cookieEntry.getValue());
-            cookie.setDomain(crawlerSet.getDomain());
-            cookieStore.addCookie(cookie);
-        }
-        for (Map.Entry<String, Map<String, String>> domainEntry : crawlerSet.getCookies().entrySet()) {
-            for (Map.Entry<String, String> cookieEntry : domainEntry.getValue().entrySet()) {
-                BasicClientCookie cookie = new BasicClientCookie(cookieEntry.getKey(), cookieEntry.getValue());
-                cookie.setDomain(domainEntry.getKey());
-                cookieStore.addCookie(cookie);
-            }
-        }
+        //...
         httpClientBuilder.setDefaultCookieStore(cookieStore);
     }
 

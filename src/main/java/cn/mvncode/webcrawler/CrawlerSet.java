@@ -1,6 +1,5 @@
 package cn.mvncode.webcrawler;
 
-import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.UsernamePasswordCredentials;
 
@@ -14,9 +13,7 @@ public class CrawlerSet {
 
     private String domain;//网址
 
-    private String userAgent;//请求名
-
-    private Map<String, String> defaultCookies = new LinkedHashMap<String, String>();//该网页Cookie
+    private Map<String, String> defaultCookies = new HashMap<String, String>();//seek网页的Cookie
 
     private Map<String, Map<String, String>> cookies = new HashMap<String, Map<String, String>>();//所有网页的Cookies
 
@@ -29,13 +26,13 @@ public class CrawlerSet {
 
     private int sleepTime = 5000;
 
-    private int retryTimes = 0;
+    private int retryTimes = 3;
 
-    private int cycleRetryTimes = 0;
+    private int cycleRetryTimes = 3;
 
     private int timeOut = 5000;
 
-    private int retrySleepTime = 1000;
+    private int retrySleepTime = 2000;
 
     private static final Set<Integer> DEFAULT_STATUS_CODE_SET = new HashSet<Integer>();
 
@@ -52,8 +49,6 @@ public class CrawlerSet {
 
 //    private ProxyPool httpProxyPool;
 
-    private boolean useGzip = true;
-
     /**
      * 初始化DEFAULT_STATUS_CODE_SET
      */
@@ -61,78 +56,12 @@ public class CrawlerSet {
         DEFAULT_STATUS_CODE_SET.add(200);
     }
 
-    public static CrawlerSet set(){
+    public static CrawlerSet set () {
         return new CrawlerSet();
     }
 
-    public static CrawlerSet setByDefault(){
-        return CrawlerSet.set().setTimeOut(5000);
-    }
-
-
-    /**
-     * 从网址中添加Cookie
-     *
-     * @param name
-     * @param value
-     * @return this
-     */
-    public CrawlerSet addCookie (String name, String value) {
-        defaultCookies.put(name, value);
-        return this;
-    }
-
-    /**
-     * 从其他网址添加Cookie
-     *
-     * @param domain
-     * @param name
-     * @param value
-     * @return this
-     */
-    public CrawlerSet addCookie (String domain, String name, String value) {
-        if (!cookies.containsKey(domain)) {
-            cookies.put(domain, new HashMap<String, String>());
-        }
-        return this;
-    }
-
-    /**
-     * 设置请求名
-     *
-     * @param userAgent
-     * @return this
-     */
-    public CrawlerSet setUserAgent (String userAgent) {
-        this.userAgent = userAgent;
-        return this;
-    }
-
-    /**
-     * 获取Cookie
-     *
-     * @return defaultCookies
-     */
-    public Map<String, String> getDefaultCookies () {
-        return defaultCookies;
-    }
-
-    /**
-     * 获取所有网页cookies
-     *
-     * @return cookies
-     */
-    public Map<String, Map<String, String>> getCookies () {
-        return cookies;
-    }
-
-    /**
-     * 获取请求名
-     *
-     * @return userAgent
-     */
-    public String getUserAgent () {
-        return userAgent;
+    public static CrawlerSet setByDefault () {
+        return CrawlerSet.set().setTimeOut(5000).setRetryTimes(3);
     }
 
     /**
@@ -173,6 +102,33 @@ public class CrawlerSet {
         return charset;
     }
 
+    /**
+     * 添加seek网页Cookie
+     *
+     * @param name
+     * @param value
+     * @return
+     */
+    public CrawlerSet addCookie (String name, String value) {
+        defaultCookies.put(name, value);
+        return this;
+    }
+
+    /**
+     * 添加所有网页cookies
+     *
+     * @param domain
+     * @param name
+     * @param value
+     * @return
+     */
+    public CrawlerSet addCookies (String domain, String name, String value) {
+        if (!cookies.containsKey(domain)) {
+            cookies.put(domain, new HashMap<String, String>());
+        }
+        cookies.get(domain).put(name, value);
+        return this;
+    }
 
     public int getTimeOut () {
         return timeOut;
@@ -284,6 +240,7 @@ public class CrawlerSet {
 
     /**
      * 设置循环重试次数
+     *
      * @param cycleRetryTimes
      * @return
      */
@@ -305,10 +262,6 @@ public class CrawlerSet {
         return httpProxy;
     }
 
-    public boolean isUseGzip () {
-        return useGzip;
-    }
-
     public int getRetrySleepTime () {
         return retrySleepTime;
     }
@@ -318,10 +271,6 @@ public class CrawlerSet {
         return this;
     }
 
-    public CrawlerSet setUseGzip (boolean useGzip) {
-        this.useGzip = useGzip;
-        return this;
-    }
 
     @Override
     public boolean equals (Object o) {
@@ -343,7 +292,6 @@ public class CrawlerSet {
         if (headers != null ? !headers.equals(crawlerSet.headers) : crawlerSet.headers != null) return false;
         if (startRequests != null ? !startRequests.equals(crawlerSet.startRequests) : crawlerSet.startRequests != null)
             return false;
-        if (userAgent != null ? !userAgent.equals(crawlerSet.userAgent) : crawlerSet.userAgent != null) return false;
 
         return true;
     }
@@ -351,7 +299,6 @@ public class CrawlerSet {
     @Override
     public int hashCode () {
         int result = domain != null ? domain.hashCode() : 0;
-        result = 31 * result + (userAgent != null ? userAgent.hashCode() : 0);
         result = 31 * result + (defaultCookies != null ? defaultCookies.hashCode() : 0);
         result = 31 * result + (charset != null ? charset.hashCode() : 0);
         result = 31 * result + (startRequests != null ? startRequests.hashCode() : 0);
@@ -368,7 +315,6 @@ public class CrawlerSet {
     public String toString () {
         return "CrawlerSet{" +
                 "domain='" + domain + '\'' +
-                ", userAgent='" + userAgent + '\'' +
                 ", defaultCookies=" + defaultCookies +
                 ", cookies=" + cookies +
                 ", charset='" + charset + '\'' +
@@ -382,7 +328,6 @@ public class CrawlerSet {
                 ", headers=" + headers +
                 ", httpProxy=" + httpProxy +
                 ", usernamePasswordCredentials=" + usernamePasswordCredentials +
-                ", useGzip=" + useGzip +
                 '}';
     }
 
@@ -395,4 +340,11 @@ public class CrawlerSet {
     }
 
 
+    public Map<String, String> getDefaultCookies () {
+        return defaultCookies;
+    }
+
+    public Map<String, Map<String, String>> getCookies () {
+        return cookies;
+    }
 }

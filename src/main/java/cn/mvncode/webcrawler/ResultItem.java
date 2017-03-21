@@ -12,8 +12,6 @@ public class ResultItem {
 
     private Map<String, String> comment = new LinkedHashMap<String, String>();
 
-    private Set<Request> targetUrls = new LinkedHashSet<Request>();
-
     private Request request;
 
     private CrawlerSet crawlerSet;
@@ -42,24 +40,6 @@ public class ResultItem {
 
     public void setRequest (Request request) {
         this.request = request;
-    }
-
-    public Set<Request> getTargetUrls () {
-        return targetUrls;
-    }
-
-    public void setTargetUrls (Set<Request> targetUrls) {
-        this.targetUrls = targetUrls;
-    }
-
-    public ResultItem addTargetUrls (Request url) {
-        targetUrls.add(url);
-        return this;
-    }
-
-    public ResultItem deleteTargetUrls (Request url) {
-        targetUrls.remove(url);
-        return this;
     }
 
     public <T> ResultItem put (String key, T value) {

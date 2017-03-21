@@ -31,8 +31,8 @@ public class UrlUtilsTest {
 
     @Test
     public void getHost () throws Exception {
-        System.out.println(UrlUtils.getHost("http://blog.csdn.net/guolin6315/article/details/7296955"));
-        System.out.println(UrlUtils.getDomain("http://blog.csdn.net/guolin6315/article/details/7296955"));
+        System.out.println(UrlUtils.getHost("host:"+"http://blog.csdn.net/guolin6315/article/details/7296955"));
+        System.out.println(UrlUtils.getDomain("domain:"+"http://blog.csdn.net/guolin6315/article/details/7296955"));
     }
 
 }

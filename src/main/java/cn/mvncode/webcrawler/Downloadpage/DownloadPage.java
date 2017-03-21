@@ -8,7 +8,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -23,29 +22,51 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 下载网页
  * Created by Pavilion on 2017/3/14.
  */
 public class DownloadPage {
 
     private static final String DefaultCharSet = Charset.defaultCharset().name();
 
+    private final Map<String, CloseableHttpClient> httpClients = new HashMap<String, CloseableHttpClient>();
+
     /**
-     * 下载网页并保存
+     * 获取客户端(beta0.1.0)
+     *
+     * @param set
+     * @return
+     */
+    private CloseableHttpClient getHttpClient (CrawlerSet set) {
+        if (set == null) {
+            return HttpClientFactory.getClient();
+        }
+        String domain = set.getDomain();
+        CloseableHttpClient httpClient = httpClients.get(domain);
+        if (httpClient == null) {
+            httpClient = HttpClientFactory.getClient(set);
+            httpClients.put(domain, httpClient);
+        }
+        return httpClient;
+    }
+
+    /**
+     * 下载网页并保存(beta0.1.0)
      *
      * @param request
      */
-    public Page download (Request request, CrawlerSet crawlerSet) {
+    public Page download (Request request, CrawlerSet crawlerSet) throws IOException {
 
-        //获取客户端
-        CloseableHttpClient httpClient = HttpClientFactory.getClient(crawlerSet);
         //获取请求
         HttpUriRequest httpUriRequest = getHttpUriRequest(request, crawlerSet);
         //获取response
-        CloseableHttpResponse httpResponse = getResponse(httpClient, httpUriRequest);
+        CloseableHttpClient httpClient = getHttpClient(crawlerSet);
+        CloseableHttpResponse httpResponse =
+                getResponse(httpClient, httpUriRequest);
 
         Page page = null;
         try {
@@ -54,72 +75,44 @@ public class DownloadPage {
             e.printStackTrace();
         }
 
-        /*    测试    */
-//        System.out.println("*General");
-//        System.out.println("Request URL: " + httpUriRequest.getURI());
-//        //获取状态码
-//        int statusCode = httpResponse.getStatusLine().getStatusCode();
-//        request.putExtras(Request.STATUS_CODE, statusCode);
-//        System.out.println("Status Code: " + statusCode);
-//        System.out.println("");
-//
-//        System.out.println("*Response Headers");
-//        Header[] responseHeaders = httpResponse.getAllHeaders();
-//        for (Header header : responseHeaders) {
-//            System.out.println(header);
-//        }
-//        System.out.println("");
-//
-//        System.out.println("*Request Headers");
-//        Header[] headers1 = httpUriRequest.getAllHeaders();
-//        for (Header header : headers1) {
-//            System.out.println(header);
-//        }
-//        System.out.println(httpResponse.getEntity().getContentType());
-//        System.out.println(httpResponse.getEntity().getContentType().getValue());
-//        System.out.println(httpResponse.getEntity().getContentType().getName());
-//        System.out.println("");
-
-
         return page;
-
     }
 
     /**
-     * 请求基本设置
-     *
-     * @return requestConfig
-     */
-    private RequestConfig getRequestConfig (CrawlerSet crawlerSet) {
-        return RequestConfig.custom()
-                .setConnectTimeout(crawlerSet.getTimeOut())//连接超时
-                .setSocketTimeout(crawlerSet.getTimeOut())//请求获取数据的超时时间response
-                .setConnectionRequestTimeout(crawlerSet.getTimeOut())
-                .setExpectContinueEnabled(true)
-                .setTargetPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
-                .setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
-                .setCookieSpec(CookieSpecs.DEFAULT)//管理cookie规范
-                .build();
-    }
-
-    /**
-     * 实现HttpUriRequest接口
+     * 实现HttpUriRequest接口(beta0.1.1)
      *
      * @param request
      * @return
      */
     private HttpUriRequest getHttpUriRequest (Request request, CrawlerSet crawlerSet) {
         RequestBuilder requestBuilder = selectRequestMethod(request).setUri(request.getUrl());
-        for (Map.Entry<String, String> headerEntry : request.getHeaders().entrySet()) {
-            requestBuilder.addHeader(headerEntry.getKey(), headerEntry.getValue());
+        //伪装爬虫
+        requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
+        //添加Cookie(有必要时)
+        if (!crawlerSet.getDefaultCookies().isEmpty()) {
+            for (Map.Entry<String, String> entry : crawlerSet.getDefaultCookies().entrySet()) {
+                requestBuilder.addHeader(entry.getKey(), entry.getValue());
+            }
         }
-        requestBuilder.setConfig(getRequestConfig(crawlerSet));
+        //提供refer
+        if (request.getRefer() != null) {
+            requestBuilder.addHeader("Referer", request.getRefer());
+        }
+        //定制请求规范
+        requestBuilder.setConfig(RequestConfig.custom()
+                .setConnectTimeout(crawlerSet.getTimeOut())//连接超时
+                .setSocketTimeout(crawlerSet.getTimeOut())//请求获取数据的超时时间response
+                .setConnectionRequestTimeout(crawlerSet.getTimeOut())
+                .setCookieSpec(CookieSpecs.STANDARD)//管理cookie规范
+                .build());
+
         HttpUriRequest httpUriRequest = requestBuilder.build();
         return httpUriRequest;
     }
 
     /**
-     * 设置请求信息
+     * 设置请求信息(beta0.1.0)
      *
      * @param request
      * @return default getMethod
@@ -128,6 +121,7 @@ public class DownloadPage {
         String method = request.getMethod();
         if (method == null || method.equalsIgnoreCase("GET")) {
             //默认get
+            request.setMethod("get");
             return RequestBuilder.get();
         } else if (method.equalsIgnoreCase("POST")) {
             RequestBuilder requestBuilder = RequestBuilder.post();
@@ -150,7 +144,7 @@ public class DownloadPage {
     }
 
     /**
-     * 获取网页编码
+     * 获取网页编码(stable0.1.0)
      *
      * @param httpResponse
      * @return charset
@@ -189,7 +183,7 @@ public class DownloadPage {
     }
 
     /**
-     * 获取response
+     * 获取response(stable0.1.0)
      *
      * @param httpUriRequest
      * @return
@@ -205,7 +199,7 @@ public class DownloadPage {
     }
 
     /**
-     * 获取response消息主体
+     * 获取response消息主体(stable0.1.0)
      *
      * @param httpResponse
      * @param htmlCharset
@@ -227,7 +221,7 @@ public class DownloadPage {
     }
 
     /**
-     * 保存网页到page
+     * 保存网页到page(beta0.1.0)
      *
      * @param request
      * @param httpResponse
@@ -247,8 +241,9 @@ public class DownloadPage {
         page.setStatusCode(httpResponse.getStatusLine().getStatusCode());
         page.setUrl(request.getUrl());
         page.setCrawlerSet(set);
+        page.addTargetUrl(request);//加入当前url进入待处理队列
 
-        //确保连接关闭
+        //确保连接释放回模拟器池
         if (httpResponse != null) {
             EntityUtils.consume(httpResponse.getEntity());
         }
