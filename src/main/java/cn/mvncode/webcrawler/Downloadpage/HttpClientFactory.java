@@ -1,6 +1,7 @@
 package cn.mvncode.webcrawler.Downloadpage;
 
 import cn.mvncode.webcrawler.CrawlerSet;
+import cn.mvncode.webcrawler.Proxy.Proxy;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
@@ -12,6 +13,7 @@ import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.*;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 import org.apache.http.impl.cookie.BasicClientCookie;
@@ -110,8 +112,15 @@ public class HttpClientFactory {
      *
      * @return HttpClient
      */
-    public static CloseableHttpClient getClient (CrawlerSet crawlerSet) {
+    public static CloseableHttpClient getClient (CrawlerSet crawlerSet, Proxy proxy) {
+
         HttpClientBuilder httpClientBuilder = HttpClients.custom();
+
+        //设置代理ip
+        if (proxy != null) {
+            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy.getHttpHost());
+            httpClientBuilder.setRoutePlanner(routePlanner);
+        }
 
         //使用连接池管理器
         httpClientBuilder.setConnectionManager(poolingHttpClientConnectionManager);
@@ -140,12 +149,6 @@ public class HttpClientFactory {
         if (crawlerSet != null) {
             httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(crawlerSet.getRetryTimes(), true));
         }
-
-//        //代理设置(使用JRE代理选择器来获取代理配置)
-//        SystemDefaultRoutePlanner routePlanner = new SystemDefaultRoutePlanner(
-//                ProxySelector.getDefault()
-//        );
-//        httpClientBuilder.setRoutePlanner(routePlanner);
 
         //Cookie策略定制
 //        generateCookie(httpClientBuilder, crawlerSet);

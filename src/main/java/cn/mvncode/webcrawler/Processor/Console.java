@@ -6,6 +6,7 @@ import cn.mvncode.webcrawler.PageHandler.PageResponseHandler;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
+import cn.mvncode.webcrawler.Utils.CloseUtil;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
 
 import java.io.Closeable;
@@ -66,24 +67,9 @@ public class Console {
      * 关闭io流
      */
     public void close () {
-        destroyEach(pageResponseHandler);
+        CloseUtil.destroyEach(pageResponseHandler);
     }
 
-
-    /**
-     * 销毁对象
-     *
-     * @param object
-     */
-    private void destroyEach (Object object) {
-        if (object instanceof Closeable) {//检查是否属于需要关闭类的实例
-            try {
-                ((Closeable) object).close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
 
 }

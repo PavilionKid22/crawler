@@ -3,6 +3,7 @@ package cn.mvncode.webcrawler.PageHandler;
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
 import cn.mvncode.webcrawler.Page;
+import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
@@ -36,7 +37,7 @@ public class PageResponseHandler {
 
 
     /**
-     * 处理网页(beta0.1.0)
+     * 处理网页(beta0.1.1)
      *
      * @param seek
      * @param set
@@ -47,8 +48,11 @@ public class PageResponseHandler {
 
         //初始化下载器
         DownloadPage downloadPage = new DownloadPage();
-        Page page = downloadPage.download(seek, set);
+        Page page = downloadPage.download(seek, set, null);
         String refer = page.getUrl();
+
+        //获取代理ip
+        Proxy proxy = null;
 
         while (!page.getTargetUrls().isEmpty()) {
 
@@ -63,10 +67,6 @@ public class PageResponseHandler {
             for (Map.Entry<String, String> entry : comments.entrySet()) {
                 resultItem.addComment(entry.getKey(), entry.getValue());
             }
-            /*  测试  */
-            System.out.println("Request URL: " + page.getUrl());
-            System.out.println("Status Code: " + page.getStatusCode());
-            /*  测试  */
             //获取下一页url
             Request newRequest = getUrl(document, refer);
             //获取refer
@@ -74,7 +74,7 @@ public class PageResponseHandler {
             //删除当前处理url
             page.removeTargetUrl(page.getRequest());
             //加载新页面
-            page = downloadPage.download(newRequest, set);
+            page = downloadPage.download(newRequest, set, proxy);
             //抓取间隔
             try {
                 Thread.sleep(1000);

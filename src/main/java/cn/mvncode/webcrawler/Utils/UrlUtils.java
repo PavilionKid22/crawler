@@ -116,5 +116,36 @@ public class UrlUtils {
         return null;
     }
 
+    /**
+     * 检验ip合法性
+     *
+     * @param ip
+     * @return
+     */
+    public static boolean checkIP (String ip) {
+        Pattern patternForIp = Pattern.compile("^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\."
+                + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
+                + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
+                + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)$");
+        Matcher matcher = patternForIp.matcher(ip);
+        if (matcher.find()) {
+            return true;
+        }
+        return false;
+    }
 
+    /**
+     * 匹配协议
+     *
+     * @param protocol
+     * @return
+     */
+    public static boolean checkProtocol (String protocol) {
+        Pattern patternForProtocol = Pattern.compile("\\bhttp\\b|\\bftp\\b|\\bhttps\\b");
+        Matcher matcher = patternForProtocol.matcher(protocol.toLowerCase());
+        if (matcher.find()) {
+            return true;
+        }
+        return false;
+    }
 }
