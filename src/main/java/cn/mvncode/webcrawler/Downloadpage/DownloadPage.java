@@ -4,6 +4,7 @@ import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
+import cn.mvncode.webcrawler.Utils.DateUtil;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -58,27 +59,35 @@ public class DownloadPage {
      *
      * @param request
      */
-    public Page download (Request request, CrawlerSet crawlerSet, Proxy proxy) throws IOException {
+    public Page download (Request request, CrawlerSet crawlerSet, Proxy proxy) {
 
+        Page page = null;
         //获取请求
         HttpUriRequest httpUriRequest = getHttpUriRequest(request, crawlerSet);
         //获取response
         CloseableHttpClient httpClient = getHttpClient(crawlerSet, proxy);
-        CloseableHttpResponse httpResponse =
-                getResponse(httpClient, httpUriRequest);
+        CloseableHttpResponse httpResponse = null;
+        try {
+            httpResponse = getResponse(httpClient, httpUriRequest);
+        } catch (IOException e) {
+            System.err.println("httpClient execute faild" + DateUtil.timeNow());
+//            e.printStackTrace();
+            return page;
+        }
 
-        Page page = null;
         try {
             page = handleResponse(request, httpResponse, crawlerSet);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("handleResponse faild" + DateUtil.timeNow());
+//            e.printStackTrace();
+            return page;
         }
 
-        /*  测试  */
-        System.out.println("Refer:" + request.getRefer());
-        System.out.println("Request URL: " + request.getUrl());
-        System.out.println("Status Code: " + page.getStatusCode());
-        /*  测试  */
+//        /*  测试  */
+//        System.out.println("Refer:" + request.getRefer());
+//        System.out.println("Request URL: " + request.getUrl());
+//        System.out.println("Status Code: " + page.getStatusCode());
+//        /*  测试  */
 
         return page;
     }
@@ -154,13 +163,8 @@ public class DownloadPage {
      * @param httpUriRequest
      * @return
      */
-    private CloseableHttpResponse getResponse (CloseableHttpClient httpClient, HttpUriRequest httpUriRequest) {
-        CloseableHttpResponse response = null;
-        try {
-            response = httpClient.execute(httpUriRequest);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private CloseableHttpResponse getResponse (CloseableHttpClient httpClient, HttpUriRequest httpUriRequest) throws IOException {
+        CloseableHttpResponse response = httpClient.execute(httpUriRequest);
         return response;
     }
 

@@ -1,5 +1,6 @@
 package cn.mvncode.webcrawler.Proxy;
 
+import cn.mvncode.webcrawler.Utils.DateUtil;
 import org.junit.Test;
 
 /**
@@ -11,13 +12,10 @@ public class SimpleProxyPoolTest {
         SimpleProxyPool pool = new SimpleProxyPool();
         pool.getProxyToPool();
         Proxy proxy = pool.getProxy();
-        if(proxy==null){
-            System.out.println("null");
-        }else {
-            System.out.println(proxy.getHttpHost().getSchemeName());
-            System.out.println(proxy.getHttpHost().getHostName());
-            System.out.println(proxy.getHttpHost().getPort());
-            System.out.println(proxy.getHttpHost().getAddress());
+        if (proxy == null) {
+            System.out.println("null" + DateUtil.timeNow());
+        } else {
+            System.out.println(proxy.getHttpHost().getHostName() + DateUtil.timeNow());
         }
     }
 

@@ -27,6 +27,10 @@ public class Proxy implements Serializable, Delayed {
         reuseTimeInterval = System.nanoTime() + TimeUnit.NANOSECONDS.convert(reuseTimeInterval, TimeUnit.NANOSECONDS);
     }
 
+    public void resetInterval(){
+        reuseTimeInterval = System.nanoTime() + TimeUnit.NANOSECONDS.convert(reuseTimeInterval, TimeUnit.NANOSECONDS);
+    }
+
     public HttpHost getHttpHost () {
         return httpHost;
     }

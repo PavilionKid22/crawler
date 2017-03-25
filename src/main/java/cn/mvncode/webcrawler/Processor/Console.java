@@ -59,7 +59,7 @@ public class Console {
      */
     public void initComponent (Request request) {
         if (request != null) {
-            set.setDomain(UrlUtils.getDomain(request.getUrl()));
+            set.setDomain(UrlUtils.getDomain(UrlUtils.getDomain(request.getUrl())));
         }
     }
 

@@ -6,10 +6,8 @@ import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
 import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.Utils.CloseUtil;
+import cn.mvncode.webcrawler.Utils.DateUtil;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -21,8 +19,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Random;
-import java.util.concurrent.DelayQueue;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.*;
 
 /**
  * Created by Pavilion on 2017/3/20.
@@ -32,21 +32,22 @@ public class SimpleProxyPool {
     private DelayQueue<Proxy> proxies = new DelayQueue<Proxy>();//代理池
     private Proxy currentProxy;//正在使用的代理
 
-    private String file = "D:\\IdeaPro\\crawler\\src\\main\\java\\cn\\mvncode\\webcrawler" +
-            "\\Proxy\\ProxyIpPool.txt";
-    private String charset = Charset.defaultCharset().name();
-
     private DownloadPage downloadPage = new DownloadPage();//抓取代理模拟器
-    private DownloadPage testDownload = new DownloadPage();//测试模拟器
-    private Page page = new Page();
 
+    private DownloadPage testDownload = new DownloadPage();//测试模拟器
+    private ExecutorService service = Executors.newSingleThreadScheduledExecutor();//测试线程池
+    private Page page = new Page();
     private Page testPage = new Page();
 
-    private String testUrl = "http://www.baidu.com";
+    private String testUrl;
+    private String file;
+    private String charset;
 
-
-    public Proxy getCurrentProxy () {
-        return currentProxy;
+    public SimpleProxyPool(){
+        file = "D:\\IdeaPro\\crawler\\src\\main\\java\\cn\\mvncode\\webcrawler" +
+                "\\Proxy\\ProxyIpPool.txt";
+        charset = Charset.defaultCharset().name();
+        testUrl = "http://www.baidu.com";
     }
 
     /**
@@ -60,6 +61,8 @@ public class SimpleProxyPool {
         }
         //回收代理
         if (currentProxy != null && testProxy(currentProxy)) {
+            System.out.println("回收代理" + DateUtil.timeNow());//tttttttttttttt
+            currentProxy.resetInterval();
             proxies.offer(currentProxy);
         } else {
             currentProxy = null;
@@ -79,9 +82,10 @@ public class SimpleProxyPool {
      * @throws IOException
      */
     public void getProxyToPool () throws IOException {
+        System.out.println("获取代理..." + DateUtil.timeNow());//tttt
         String url = "http://www.xdaili.cn/freeproxy.html";
         getWebAPI(url);
-        parseJson();
+        parsePage();
     }
 
     /**
@@ -91,11 +95,33 @@ public class SimpleProxyPool {
      * @return
      */
     public boolean testProxy (Proxy proxy) throws IOException {
-        testPage = testDownload.download(new Request(testUrl), CrawlerSet.setByDefault(), proxy);
-        if (page.getStatusCode() < 300 && page.getStatusCode() >= 200) {
-            return true;
+        //测试任务
+        Callable<Boolean> call = new Callable<Boolean>() {
+            @Override
+            public Boolean call () throws Exception {
+                testPage = testDownload.download(new Request(testUrl),
+                        CrawlerSet.setByDefault().setDomain(UrlUtils.getDomain(testUrl)), proxy);
+                if (testPage != null && testPage.getStatusCode() < 300 && testPage.getStatusCode() >= 200) {
+                    return true;
+                }
+                return false;
+            }
+        };
+        //超时策略
+        Future<Boolean> future = service.submit(call);
+        boolean flag = false;
+        try {
+            flag = future.get(10000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            System.err.println("测试请求超时" + DateUtil.timeNow());
+//            e.printStackTrace();
+            return false;
         }
-        return false;
+        return flag;
     }
 
     /**
@@ -127,7 +153,7 @@ public class SimpleProxyPool {
      *
      * @return
      */
-    public void parseJson () throws IOException {
+    public void parsePage () throws IOException {
 
         byte[] contentBytes = Files.readAllBytes(Paths.get(file));
         String content = new String(contentBytes, charset);
@@ -135,15 +161,14 @@ public class SimpleProxyPool {
         //转化格式
         Document document = Jsoup.parse(content);
         //解析文件
-        StringBuffer stringBuffer = new StringBuffer();
-        String ip = null;
-        String port = null;
-        String httpType = null;
         Elements elements = document.select("div#table1");
         Elements tbody = elements.select("tbody#target").select("tr");
-        System.out.println(tbody);
         for (Element element : tbody) {
             Elements texts = element.select("td");
+            StringBuffer stringBuffer = new StringBuffer();
+            String ip = null;
+            String port = null;
+            String httpType = null;
             for (Element text : texts) {
                 stringBuffer.append(text.text() + "/");
             }
@@ -156,12 +181,13 @@ public class SimpleProxyPool {
                 //加入队列
                 HttpHost httpHost = new HttpHost(ip, Integer.parseInt(port), httpType.toLowerCase());
                 Proxy proxy = new Proxy(httpHost);
-                if (testProxy(proxy)) {
+                if (testProxy(proxy)) {//测试代理
                     proxies.offer(new Proxy(httpHost));
+                    System.out.println(httpHost.getHostName() + DateUtil.timeNow());//tttttttttt
                 }
             }
-            System.out.println(httpType + "://" + ip + ":" + port);
         }
+        System.out.println("代理池：" + proxies.size());//ttttttttttttttttt
 
     }
 
@@ -172,6 +198,7 @@ public class SimpleProxyPool {
     public void close () {
         CloseUtil.destroyEach(downloadPage);
         CloseUtil.destroyEach(testDownload);
+        service.shutdown();
     }
 
 }

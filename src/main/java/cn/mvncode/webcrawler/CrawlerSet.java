@@ -78,8 +78,9 @@ public class CrawlerSet {
      *
      * @param domain
      */
-    public void setDomain (String domain) {
+    public CrawlerSet setDomain (String domain) {
         this.domain = domain;
+        return this;
     }
 
     /**
