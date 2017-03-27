@@ -3,40 +3,29 @@ package cn.mvncode.webcrawler.Proxy;
 import cn.mvncode.webcrawler.Utils.DateUtil;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Observable;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Pavilion on 2017/3/23.
  */
-public class GetProxyThread {
+public class GetProxyThread extends Observable implements Runnable {
 
-    private int updatePoolInterval;
-    private int initDelayForPool;
-    private int updateProxyInterval;
-    private int initDelayForGetProxy;
+    private long updatePoolInterval = 1000 * 60 * 10;//ms
+    private long initDelayForPool = 0;
+    private long updateProxyInterval = (new Random().nextInt(60 - 30 + 1) + 30) * 1000;
+    private long initDelayForGetProxy = 60 * 1000;
 
     private SimpleProxyPool proxyPool = new SimpleProxyPool();
 
     private Proxy currentProxy = null;
 
     private boolean flag = false;
+    private boolean isRunning = true;
 
-    public GetProxyThread () {
-        updateProxyInterval = (new Random().nextInt(90 - 60 + 1) + 60) * 1000;//ms
-        updatePoolInterval = 1000 * 60 * 10;//ms
-        initDelayForGetProxy = initDelayForPool + updateProxyInterval;
-        initDelayForPool = 0;
-        launchProxyPool();
-    }
-
-    public boolean isFlag () {
-        return flag;
-    }
 
     public Proxy getCurrentProxy () {
         flag = false;//使用代理flag
@@ -46,6 +35,7 @@ public class GetProxyThread {
     public void close () {
         proxyPool.close();
         flag = false;
+        isRunning = false;
     }
 
 
@@ -59,11 +49,11 @@ public class GetProxyThread {
             @Override
             public void run () {
                 try {
-                    System.out.println("更新代理池" + DateUtil.timeNow());//ttttt
+                    System.out.println("update proxy pool..." + DateUtil.timeNow());//ttttt
                     proxyPool.getProxyToPool();
                 } catch (IOException e) {
 //                    e.printStackTrace();
-                    System.err.println("更新线程池失败" + DateUtil.timeNow());
+                    System.err.println("update pool failed" + DateUtil.timeNow());
                 }
             }
         }, initDelayForPool, updatePoolInterval);
@@ -73,16 +63,38 @@ public class GetProxyThread {
             @Override
             public void run () {
                 try {
-                    System.out.println("更新代理" + DateUtil.timeNow());//ttttt
+                    System.out.println("update proxy..." + DateUtil.timeNow());//ttttt
                     currentProxy = proxyPool.getProxy();
                     flag = true;
                 } catch (IOException e) {
 //                    e.printStackTrace();
                     flag = false;
-                    System.err.println("获取代理失败" + DateUtil.timeNow());
+                    currentProxy = null;
+                    System.err.println("update proxy failed" + DateUtil.timeNow());
                 }
             }
         }, initDelayForGetProxy, updateProxyInterval);
+    }
+
+
+    @Override
+    public void run () {
+        launchProxyPool();
+        while (isRunning) {
+            if (flag) {
+                Proxy proxy = getCurrentProxy();
+                if (proxy == null) {
+                    System.out.println("proxy is null, use localhost");
+                }
+                setChanged();
+                notifyObservers(proxy);//与setChanged()一起使用
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 

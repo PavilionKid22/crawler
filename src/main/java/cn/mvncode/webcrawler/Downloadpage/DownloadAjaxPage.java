@@ -89,7 +89,7 @@ public class DownloadAjaxPage {
 
         page.setRequest(request);
         page.setUrl(request.getUrl());
-        page.setCrawlerSet(CrawlerSet.setByDefault());
+        page.setCrawlerSet(CrawlerSet.setDefault());
         page.setPlainText(content);
         page.setCharset(charset);
 

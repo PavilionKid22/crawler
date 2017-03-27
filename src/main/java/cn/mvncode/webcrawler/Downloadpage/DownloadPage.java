@@ -61,7 +61,7 @@ public class DownloadPage {
      */
     public Page download (Request request, CrawlerSet crawlerSet, Proxy proxy) {
 
-        Page page = null;
+        Page page = new Page();//防止空指针异常
         //获取请求
         HttpUriRequest httpUriRequest = getHttpUriRequest(request, crawlerSet);
         //获取response
@@ -70,7 +70,7 @@ public class DownloadPage {
         try {
             httpResponse = getResponse(httpClient, httpUriRequest);
         } catch (IOException e) {
-            System.err.println("httpClient execute faild" + DateUtil.timeNow());
+            System.err.println("httpClient execute failed" + DateUtil.timeNow());
 //            e.printStackTrace();
             return page;
         }
@@ -78,16 +78,10 @@ public class DownloadPage {
         try {
             page = handleResponse(request, httpResponse, crawlerSet);
         } catch (IOException e) {
-            System.err.println("handleResponse faild" + DateUtil.timeNow());
+            System.err.println("handleResponse failed" + DateUtil.timeNow());
 //            e.printStackTrace();
             return page;
         }
-
-//        /*  测试  */
-//        System.out.println("Refer:" + request.getRefer());
-//        System.out.println("Request URL: " + request.getUrl());
-//        System.out.println("Status Code: " + page.getStatusCode());
-//        /*  测试  */
 
         return page;
     }

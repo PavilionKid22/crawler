@@ -3,13 +3,13 @@ package cn.mvncode.webcrawler.PageHandler;
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
 import cn.mvncode.webcrawler.Page;
+import cn.mvncode.webcrawler.Proxy.GetProxyThread;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
-import cn.mvncode.webcrawler.Utils.UrlUtils;
+import cn.mvncode.webcrawler.Utils.DateUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.StatusLine;
-import org.apache.http.client.HttpResponseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,44 +17,85 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 网页解析
  * Created by Pavilion on 2017/3/16.
  */
-public class PageResponseHandler {
+public class PageResponseHandler implements Observer {
 
-    private static ResultItem resultItem = new ResultItem();
+    private ResultItem resultItem;
+    private GetProxyThread proxyThread;
+    private Proxy proxy;
+
+    public PageResponseHandler () {
+        resultItem = new ResultItem();
+        proxyThread = new GetProxyThread();
+        proxyThread.addObserver(this);// 该类来观察GetProxyThread实例化线程thread
+        new Thread(proxyThread).start();//启动代理池线程
+    }
+
+//    public static void main (String[] args) {
+//        new PageResponseHandler();
+//    }
 
     /**
      * 获取网页处理结果
      *
      * @return result
      */
-    public ResultItem getHandler (Request seek, CrawlerSet set) throws IOException {
-        return new PageResponseHandler().handleResponse(seek, set);
+    public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, DownloadPage downloadPage) throws IOException {
+        this.proxy = proxy;
+        handleResponse(seek, set, downloadPage);
+        return resultItem;
     }
 
+    /**
+     * 只有在setChange()被调用后，notifyObservers()才会去调用update()
+     *
+     * @param o
+     * @param arg
+     */
+    @Override
+    public void update (Observable o, Object arg) {
+        proxy = (Proxy) arg;
+    }
 
     /**
-     * 处理网页(beta0.1.1)
+     * 关闭流
+     */
+    public void close () {
+        proxyThread.close();
+    }
+
+    /**
+     * 以下为定制
+     */
+
+    /**
+     * 处理网页（0.1.2）
      *
      * @param seek
      * @param set
+     * @param downloador
      * @return
      * @throws IOException
      */
-    public ResultItem handleResponse (Request seek, CrawlerSet set) throws IOException {
+    public void handleResponse (Request seek, CrawlerSet set, DownloadPage downloador) throws IOException {
 
-        //初始化下载器
-        DownloadPage downloadPage = new DownloadPage();
-        Page page = downloadPage.download(seek, set, null);
+        Page page = downloador.download(seek, set, proxy);
         String refer = page.getUrl();
 
-        //获取代理ip
-        Proxy proxy = null;
-
+        //解析网页
         while (!page.getTargetUrls().isEmpty()) {
+
+            System.out.print("Download url = " + page.getUrl());
+            if (proxy == null) {
+                System.out.println("\tproxy = null" + DateUtil.timeNow());
+            } else {
+                System.out.println("\tproxy = " + proxy.getHttpHost().getHostName() + DateUtil.timeNow());
+            }
 
             StatusLine statusLine = page.getHttpResponse().getStatusLine();
             if (statusLine.getStatusCode() >= 300) {
@@ -73,18 +114,17 @@ public class PageResponseHandler {
             newRequest.setRefer(page.getUrl());
             //删除当前处理url
             page.removeTargetUrl(page.getRequest());
-            //加载新页面
-            page = downloadPage.download(newRequest, set, proxy);
             //抓取间隔
             try {
-                Thread.sleep(1000);
+                TimeUnit.MILLISECONDS.sleep(new Random().nextInt(2000 - 1000 + 1) + 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            //加载新页面
+            page = downloador.download(newRequest, set, proxy);
 
         }
 
-        return resultItem;
     }
 
     /**
@@ -145,6 +185,7 @@ public class PageResponseHandler {
         return url;
     }
 
+
     /**
      * 获取内容(豆瓣定制)
      * id+avatar+comment+votes+time
@@ -178,5 +219,4 @@ public class PageResponseHandler {
 
         return comments;
     }
-
 }

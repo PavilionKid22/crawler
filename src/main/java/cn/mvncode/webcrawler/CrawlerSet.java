@@ -60,7 +60,7 @@ public class CrawlerSet {
         return new CrawlerSet();
     }
 
-    public static CrawlerSet setByDefault () {
+    public static CrawlerSet setDefault () {
         return CrawlerSet.set().setTimeOut(30000).setRetryTimes(5);
     }
 

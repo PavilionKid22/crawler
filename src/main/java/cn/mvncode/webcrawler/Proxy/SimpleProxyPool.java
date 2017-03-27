@@ -19,9 +19,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.*;
 
 /**
@@ -35,15 +32,14 @@ public class SimpleProxyPool {
     private DownloadPage downloadPage = new DownloadPage();//抓取代理模拟器
 
     private DownloadPage testDownload = new DownloadPage();//测试模拟器
-    private ExecutorService service = Executors.newSingleThreadScheduledExecutor();//测试线程池
     private Page page = new Page();
-    private Page testPage = new Page();
+    private Page testPage = null;
 
     private String testUrl;
     private String file;
     private String charset;
 
-    public SimpleProxyPool(){
+    public SimpleProxyPool () {
         file = "D:\\IdeaPro\\crawler\\src\\main\\java\\cn\\mvncode\\webcrawler" +
                 "\\Proxy\\ProxyIpPool.txt";
         charset = Charset.defaultCharset().name();
@@ -61,19 +57,22 @@ public class SimpleProxyPool {
         }
         //回收代理
         if (currentProxy != null && testProxy(currentProxy)) {
-            System.out.println("回收代理" + DateUtil.timeNow());//tttttttttttttt
+            System.out.println("recovery proxy:" + currentProxy.getHttpHost().getHostName() + DateUtil.timeNow());//tttttttttttttt
             currentProxy.resetInterval();
             proxies.offer(currentProxy);
-        } else {
-            currentProxy = null;
         }
+        currentProxy = null;
         //提取代理
-        Proxy proxy = proxies.poll();
-        if (proxy == null) {
+        Proxy tmpProxy = proxies.poll();
+        if (tmpProxy == null) {
             return null;
         }
-        currentProxy = proxy;//标记
-        return proxy;
+        if(testProxy(tmpProxy)){
+            currentProxy = tmpProxy;//标记
+            System.out.println("get proxy succeed!\t" + currentProxy.getHttpHost().getHostName() +
+                    "\tleft = " + proxies.size() + DateUtil.timeNow());//tttttttttttttttttttttt
+        }
+        return currentProxy;
     }
 
     /**
@@ -82,7 +81,7 @@ public class SimpleProxyPool {
      * @throws IOException
      */
     public void getProxyToPool () throws IOException {
-        System.out.println("获取代理..." + DateUtil.timeNow());//tttt
+//        System.out.println("获取代理..." + DateUtil.timeNow());//tttt
         String url = "http://www.xdaili.cn/freeproxy.html";
         getWebAPI(url);
         parsePage();
@@ -95,14 +94,19 @@ public class SimpleProxyPool {
      * @return
      */
     public boolean testProxy (Proxy proxy) throws IOException {
+        ExecutorService service = Executors.newSingleThreadScheduledExecutor();//测试线程池
         //测试任务
         Callable<Boolean> call = new Callable<Boolean>() {
             @Override
             public Boolean call () throws Exception {
                 testPage = testDownload.download(new Request(testUrl),
-                        CrawlerSet.setByDefault().setDomain(UrlUtils.getDomain(testUrl)), proxy);
-                if (testPage != null && testPage.getStatusCode() < 300 && testPage.getStatusCode() >= 200) {
-                    return true;
+                        CrawlerSet.setDefault().setDomain(UrlUtils.getDomain(testUrl)), proxy);
+                if (testPage == null) {
+                    return false;
+                } else {
+                    if (testPage.getStatusCode() < 300 && testPage.getStatusCode() >= 200) {
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -117,10 +121,12 @@ public class SimpleProxyPool {
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
-            System.err.println("测试请求超时" + DateUtil.timeNow());
+            System.err.println(proxy.getHttpHost() + "\ttest request timeout" + DateUtil.timeNow());
 //            e.printStackTrace();
+            service.shutdown();
             return false;
         }
+        service.shutdown();
         return flag;
     }
 
@@ -136,7 +142,7 @@ public class SimpleProxyPool {
             throw new IOException("url failed");
         }
 //        Request request = new Request(url);
-//        CrawlerSet set = CrawlerSet.setByDefault();
+//        CrawlerSet set = CrawlerSet.setDefault();
 //        page = downloadPage.download(request, set, null);
         DownloadAjaxPage downloadAjaxPage = new DownloadAjaxPage();
         page = downloadAjaxPage.getPage(new Request(url));
@@ -183,11 +189,10 @@ public class SimpleProxyPool {
                 Proxy proxy = new Proxy(httpHost);
                 if (testProxy(proxy)) {//测试代理
                     proxies.offer(new Proxy(httpHost));
-                    System.out.println(httpHost.getHostName() + DateUtil.timeNow());//tttttttttt
                 }
             }
         }
-        System.out.println("代理池：" + proxies.size());//ttttttttttttttttt
+        System.out.println("pool size：" + proxies.size() + DateUtil.timeNow());//ttttttttttttttttt
 
     }
 
@@ -198,7 +203,6 @@ public class SimpleProxyPool {
     public void close () {
         CloseUtil.destroyEach(downloadPage);
         CloseUtil.destroyEach(testDownload);
-        service.shutdown();
     }
 
 }
