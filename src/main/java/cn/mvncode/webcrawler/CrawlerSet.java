@@ -34,20 +34,13 @@ public class CrawlerSet {
 
     private int retrySleepTime = 2000;
 
+    private boolean isLaunchProxyPool = true;
+
     private static final Set<Integer> DEFAULT_STATUS_CODE_SET = new HashSet<Integer>();
 
     private Set<Integer> acceptStatusCode = DEFAULT_STATUS_CODE_SET;
 
     private Map<String, String> headers = new HashMap<String, String>();
-
-    /**
-     * 代理
-     */
-    private HttpHost httpProxy;
-
-    private UsernamePasswordCredentials usernamePasswordCredentials;//代理用户名密码设置
-
-//    private ProxyPool httpProxyPool;
 
     /**
      * 初始化DEFAULT_STATUS_CODE_SET
@@ -62,6 +55,14 @@ public class CrawlerSet {
 
     public static CrawlerSet setDefault () {
         return CrawlerSet.set().setTimeOut(30000).setRetryTimes(5);
+    }
+
+    public boolean isLaunchProxyPool () {
+        return isLaunchProxyPool;
+    }
+
+    public void setLaunchProxyPool (boolean launchProxyPool) {
+        isLaunchProxyPool = launchProxyPool;
     }
 
     /**
@@ -250,19 +251,6 @@ public class CrawlerSet {
         return this;
     }
 
-    /**
-     * 设置代理
-     *
-     * @param httpProxy
-     */
-    public void setHttpProxy (HttpHost httpProxy) {
-        this.httpProxy = httpProxy;
-    }
-
-    public HttpHost getHttpProxy () {
-        return httpProxy;
-    }
-
     public int getRetrySleepTime () {
         return retrySleepTime;
     }
@@ -327,19 +315,8 @@ public class CrawlerSet {
                 ", retrySleepTime=" + retrySleepTime +
                 ", acceptStatusCode=" + acceptStatusCode +
                 ", headers=" + headers +
-                ", httpProxy=" + httpProxy +
-                ", usernamePasswordCredentials=" + usernamePasswordCredentials +
                 '}';
     }
-
-    public UsernamePasswordCredentials getUsernamePasswordCredentials () {
-        return usernamePasswordCredentials;
-    }
-
-    public void setUsernamePasswordCredentials (UsernamePasswordCredentials usernamePasswordCredentials) {
-        this.usernamePasswordCredentials = usernamePasswordCredentials;
-    }
-
 
     public Map<String, String> getDefaultCookies () {
         return defaultCookies;

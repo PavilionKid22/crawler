@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 public class GetProxyThread extends Observable implements Runnable {
 
     private long updatePoolInterval = 1000 * 60 * 10;//ms
-    private long initDelayForPool = 0;
+    private long initDelayForPool = 1000 * 60 * 5;
     private long updateProxyInterval = (new Random().nextInt(60 - 30 + 1) + 30) * 1000;
-    private long initDelayForGetProxy = 60 * 1000;
+    private long initDelayForGetProxy = 60 * 1000 + initDelayForPool;
 
     private SimpleProxyPool proxyPool = new SimpleProxyPool();
 

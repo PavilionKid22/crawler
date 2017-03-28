@@ -125,16 +125,16 @@ public class HttpClientFactory {
         //使用连接池管理器
         httpClientBuilder.setConnectionManager(poolingHttpClientConnectionManager);
 
-        //身份认证
-        CredentialsProvider credentialsProvider = null;
-        if (crawlerSet != null && crawlerSet.getUsernamePasswordCredentials() != null) {
-            credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(
-                    new AuthScope(crawlerSet.getHttpProxy()),//可以访问的范围
-                    crawlerSet.getUsernamePasswordCredentials()//用户名和密码
-            );
-            httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-        }
+//        //身份认证
+//        CredentialsProvider credentialsProvider = null;
+//        if (crawlerSet != null && crawlerSet.getUsernamePasswordCredentials() != null) {
+//            credentialsProvider = new BasicCredentialsProvider();
+//            credentialsProvider.setCredentials(
+//                    new AuthScope(crawlerSet.getHttpProxy()),//可以访问的范围
+//                    crawlerSet.getUsernamePasswordCredentials()//用户名和密码
+//            );
+//            httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+//        }
 
         //解决post/redirect/post 302跳转问题
         //HttpClient自动处理所有类型的重定向,通过POST和PUT请求的303 redirect会被转换成GET请求

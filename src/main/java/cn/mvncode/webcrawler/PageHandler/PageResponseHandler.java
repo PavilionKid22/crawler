@@ -33,7 +33,7 @@ public class PageResponseHandler implements Observer {
         resultItem = new ResultItem();
         proxyThread = new GetProxyThread();
         proxyThread.addObserver(this);// 该类来观察GetProxyThread实例化线程thread
-        new Thread(proxyThread).start();//启动代理池线程
+//        new Thread(proxyThread).start();//启动代理池线程
     }
 
 //    public static void main (String[] args) {
@@ -47,6 +47,9 @@ public class PageResponseHandler implements Observer {
      */
     public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, DownloadPage downloadPage) throws IOException {
         this.proxy = proxy;
+        if(set.isLaunchProxyPool()){
+            new Thread(proxyThread).start();//启动代理池线程
+        }
         handleResponse(seek, set, downloadPage);
         return resultItem;
     }
