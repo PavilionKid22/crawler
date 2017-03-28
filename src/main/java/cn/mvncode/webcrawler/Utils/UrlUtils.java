@@ -2,10 +2,14 @@ package cn.mvncode.webcrawler.Utils;
 
 import cn.mvncode.webcrawler.Request;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,6 +63,18 @@ public class UrlUtils {
         if (i > 0) {
             domain = StringUtils.substring(domain, 0, i);
         }
+        return domain;
+    }
+
+    /**
+     * 获取带id的domian(豆瓣，未完成)
+     *
+     * @param url
+     * @return
+     */
+    public static String getDomainWithID (String url) {
+        String domain = getDomain(url);
+
         return domain;
     }
 
@@ -147,5 +163,40 @@ public class UrlUtils {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 提取网页中包含的所有链接(beta0.1.0)
+     *
+     * @param document
+     * @return
+     */
+    private Set<Request> getUngrapUrl (Document document) {
+
+        Set<Request> ungrapUrl = new HashSet<Request>();//简单去重
+
+        Elements links = document.select("a[href]");//带有href属性的a元素
+        Elements medias = document.select("[src]");//带有src属性的所有元素
+        Elements imports = document.select("link[href]");//带有href属性的link元素
+
+        for (Element link : links) {
+            if (!link.attr("abs:href").isEmpty()) {
+                ungrapUrl.add(new Request(link.attr("abs:href")));
+            }
+        }
+
+        for (Element media : medias) {
+            if (!media.attr("abs:src").isEmpty()) {
+                ungrapUrl.add(new Request(media.attr("abs:src")));
+            }
+        }
+
+        for (Element element : imports) {
+            if (!element.attr("abs:href").isEmpty()) {
+                ungrapUrl.add(new Request(element.attr("abs:href")));
+            }
+        }
+
+        return ungrapUrl;
     }
 }

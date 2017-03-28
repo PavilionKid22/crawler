@@ -21,6 +21,8 @@ public class GetProxyThread extends Observable implements Runnable {
 
     private SimpleProxyPool proxyPool = new SimpleProxyPool();
 
+    private Timer timer = new Timer();//计时器
+
     private Proxy currentProxy = null;
 
     private boolean flag = false;
@@ -36,14 +38,14 @@ public class GetProxyThread extends Observable implements Runnable {
         proxyPool.close();
         flag = false;
         isRunning = false;
+        timer.cancel();
     }
-
 
     /**
      * 启动代理池
      */
     public void launchProxyPool () {
-        Timer timer = new Timer();
+//        Timer timer = new Timer();
         //更新代理池
         timer.schedule(new TimerTask() {
             @Override

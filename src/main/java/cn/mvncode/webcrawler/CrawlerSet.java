@@ -34,7 +34,7 @@ public class CrawlerSet {
 
     private int retrySleepTime = 2000;
 
-    private boolean isLaunchProxyPool = true;
+    private boolean isLaunchProxyPool = false;
 
     private static final Set<Integer> DEFAULT_STATUS_CODE_SET = new HashSet<Integer>();
 
@@ -61,8 +61,9 @@ public class CrawlerSet {
         return isLaunchProxyPool;
     }
 
-    public void setLaunchProxyPool (boolean launchProxyPool) {
+    public CrawlerSet setLaunchProxyPool (boolean launchProxyPool) {
         isLaunchProxyPool = launchProxyPool;
+        return this;
     }
 
     /**
