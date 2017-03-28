@@ -1,6 +1,8 @@
 package cn.mvncode.webcrawler.Proxy;
 
 import cn.mvncode.webcrawler.Utils.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Observable;
@@ -13,6 +15,8 @@ import java.util.concurrent.TimeUnit;
  * Created by Pavilion on 2017/3/23.
  */
 public class GetProxyThread extends Observable implements Runnable {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private long updatePoolInterval = 1000 * 60 * 10;//ms
     private long initDelayForPool = 1000 * 60 * 5;
@@ -51,11 +55,11 @@ public class GetProxyThread extends Observable implements Runnable {
             @Override
             public void run () {
                 try {
-                    System.out.println("update proxy pool..." + DateUtil.timeNow());//ttttt
+                    logger.info("update proxy pool...");
                     proxyPool.getProxyToPool();
                 } catch (IOException e) {
+                    logger.error("update pool failed");
 //                    e.printStackTrace();
-                    System.err.println("update pool failed" + DateUtil.timeNow());
                 }
             }
         }, initDelayForPool, updatePoolInterval);
@@ -65,14 +69,14 @@ public class GetProxyThread extends Observable implements Runnable {
             @Override
             public void run () {
                 try {
-                    System.out.println("update proxy..." + DateUtil.timeNow());//ttttt
+                    logger.info("update proxy...");
                     currentProxy = proxyPool.getProxy();
                     flag = true;
                 } catch (IOException e) {
 //                    e.printStackTrace();
                     flag = false;
                     currentProxy = null;
-                    System.err.println("update proxy failed" + DateUtil.timeNow());
+                    logger.error("update proxy failed");
                 }
             }
         }, initDelayForGetProxy, updateProxyInterval);
@@ -86,7 +90,7 @@ public class GetProxyThread extends Observable implements Runnable {
             if (flag) {
                 Proxy proxy = getCurrentProxy();
                 if (proxy == null) {
-                    System.out.println("proxy is null, use localhost");
+                    logger.info("proxy is null, use localhost");
                 }
                 setChanged();
                 notifyObservers(proxy);//与setChanged()一起使用

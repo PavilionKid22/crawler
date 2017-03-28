@@ -13,9 +13,9 @@ public class SimpleProxyPoolTest {
         pool.getProxyToPool();
         Proxy proxy = pool.getProxy();
         if (proxy == null) {
-            System.out.println("null" + DateUtil.timeNow());
+            System.out.println("null" + DateUtil.printTimeNow());
         } else {
-            System.out.println(proxy.getHttpHost().getHostName() + DateUtil.timeNow());
+            System.out.println(proxy.getHttpHost().getHostName() + DateUtil.printTimeNow());
         }
     }
 

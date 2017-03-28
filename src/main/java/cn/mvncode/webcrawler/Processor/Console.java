@@ -9,6 +9,8 @@ import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
 import cn.mvncode.webcrawler.Utils.CloseUtil;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Observable;
@@ -19,6 +21,8 @@ import java.util.Observer;
  * Created by Pavilion on 2017/3/17.
  */
 public class Console implements Observer {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private CrawlerSet set;
     private Request request;
@@ -44,7 +48,7 @@ public class Console implements Observer {
         try {
             result = pageCommentHandler.getHandler(request, set, proxy, downloador);
         } catch (IOException e) {
-            System.err.println("pageCommentHandler failed");
+            logger.error("pageHandler failed");
 //            e.printStackTrace();
         }
         /*  测试  */

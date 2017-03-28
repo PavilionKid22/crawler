@@ -2,6 +2,7 @@ package cn.mvncode.webcrawler.PageHandler;
 
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
+import cn.mvncode.webcrawler.Downloadpage.Downloader;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
@@ -13,11 +14,11 @@ import java.io.IOException;
  */
 public abstract class PageResponseHandler {
 
-    public static ResultItem resultItem;
+    public static ResultItem resultItem = new ResultItem();
     public static Proxy proxy;
 
-    abstract ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, DownloadPage downloadPage) throws IOException;
+    public abstract ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader) throws IOException;
 
-    abstract void handleResponse (Request seek, CrawlerSet set, DownloadPage downloador) throws IOException;
+    public abstract void handleResponse (Request seek, CrawlerSet set, Downloader downloader) throws IOException;
 
 }

@@ -4,7 +4,6 @@ import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
-import cn.mvncode.webcrawler.Utils.DateUtil;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +20,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -31,7 +32,9 @@ import java.util.Map;
  * 下载网页
  * Created by Pavilion on 2017/3/14.
  */
-public class DownloadPage {
+public class DownloadPage extends Downloader {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Map<String, CloseableHttpClient> httpClients = new HashMap<String, CloseableHttpClient>();
 
@@ -48,8 +51,10 @@ public class DownloadPage {
         String domain = set.getDomain();
         CloseableHttpClient httpClient = httpClients.get(domain);
         if (httpClient == null) {
-            httpClient = HttpClientFactory.getClient(set, proxy);
-            httpClients.put(domain, httpClient);
+            synchronized (this){//原子
+                httpClient = HttpClientFactory.getClient(set, proxy);
+                httpClients.put(domain, httpClient);
+            }
         }
         return httpClient;
     }
@@ -59,6 +64,7 @@ public class DownloadPage {
      *
      * @param request
      */
+    @Override
     public Page download (Request request, CrawlerSet crawlerSet, Proxy proxy) {
 
         Page page = new Page();//防止空指针异常
@@ -70,7 +76,7 @@ public class DownloadPage {
         try {
             httpResponse = getResponse(httpClient, httpUriRequest);
         } catch (IOException e) {
-            System.err.println("httpClient execute failed" + DateUtil.timeNow());
+            logger.error("httpClient execute failed");
 //            e.printStackTrace();
             return page;
         }
@@ -78,7 +84,7 @@ public class DownloadPage {
         try {
             page = handleResponse(request, httpResponse, crawlerSet);
         } catch (IOException e) {
-            System.err.println("handleResponse failed" + DateUtil.timeNow());
+            logger.error("httpResponse failed");
 //            e.printStackTrace();
             return page;
         }
@@ -218,7 +224,6 @@ public class DownloadPage {
                 return new String(contentBytes);
             }
         } else {
-//            return IOUtils.toString(httpResponse.getEntity().getContent(), htmlCharset);
             return new String(contentBytes, htmlCharset);
         }
     }

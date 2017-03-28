@@ -10,13 +10,22 @@ import java.util.Date;
 public class DateUtil {
 
     /**
+     * 打印当前时间
+     *
+     * @return
+     */
+    public static String printTimeNow () {
+        return "\t" + timeNow();
+    }
+
+    /**
      * 返回当前时间
      *
      * @return
      */
     public static String timeNow () {
         DateFormat dateFormat = new SimpleDateFormat("yy-MM-dd hh:mm:ss");
-        return "\t" + dateFormat.format(new Date());
+        return dateFormat.format(new Date());
     }
 
 }

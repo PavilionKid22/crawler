@@ -2,6 +2,7 @@ package cn.mvncode.webcrawler.Downloadpage;
 
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Page;
+import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -17,7 +18,7 @@ import java.io.InputStreamReader;
 /**
  * Created by Pavilion on 2017/3/24.
  */
-public class DownloadAjaxPage {
+public class DownloadAjaxPage extends Downloader {
 
     /**
      * 获取ajax网页内容
@@ -30,8 +31,7 @@ public class DownloadAjaxPage {
         String url = request.getUrl();
         //管道runtime调用cmd
         Runtime rt = Runtime.getRuntime();
-        Process p = rt.exec("phantomjs D:\\IdeaPro\\crawler\\src\\main" +
-                "\\java\\cn\\mvncode\\webcrawler\\Downloadpage\\code.js " + url);//cmd命令
+        Process p = rt.exec("phantomjs D:\\IdeaPro\\crawler\\src\\main\\resources\\getAjaxPage.js " + url);//cmd命令
         InputStream is = p.getInputStream();
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         StringBuffer sbf = new StringBuffer();
@@ -39,7 +39,7 @@ public class DownloadAjaxPage {
         while ((tmp = br.readLine()) != null) {
             sbf.append(tmp);
         }
-//        System.out.println(sbf.toString());
+
         return sbf.toString();
     }
 
@@ -75,16 +75,22 @@ public class DownloadAjaxPage {
     }
 
     /**
-     * getPage
+     * download
      *
      * @param request
      * @return
      * @throws IOException
      */
-    public Page getPage (Request request) throws IOException {
+    @Override
+    public Page download (Request request, CrawlerSet set, Proxy proxy) {
 
         Page page = new Page();
-        String content = getAjaxcontent(request);
+        String content = null;
+        try {
+            content = getAjaxcontent(request);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         String charset = getCharset(content);
 
         page.setRequest(request);

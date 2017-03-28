@@ -13,6 +13,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,6 +27,8 @@ import java.util.concurrent.*;
  * Created by Pavilion on 2017/3/20.
  */
 public class SimpleProxyPool {
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private DelayQueue<Proxy> proxies = new DelayQueue<Proxy>();//代理池
     private Proxy currentProxy;//正在使用的代理
@@ -40,8 +44,7 @@ public class SimpleProxyPool {
     private String charset;
 
     public SimpleProxyPool () {
-        file = "D:\\IdeaPro\\crawler\\src\\main\\java\\cn\\mvncode\\webcrawler" +
-                "\\Proxy\\ProxyIpPool.txt";
+        file = "D:\\IdeaPro\\crawler\\src\\main\\resources\\ProxyIpPool.txt";
         charset = Charset.defaultCharset().name();
         testUrl = "http://www.baidu.com";
     }
@@ -57,9 +60,11 @@ public class SimpleProxyPool {
         }
         //回收代理
         if (currentProxy != null && testProxy(currentProxy)) {
-            System.out.println("recovery proxy:" + currentProxy.getHttpHost().getHostName() + DateUtil.timeNow());//tttttttttttttt
+            logger.info("recovery proxy: " + currentProxy.getHttpHost().getHostName());
             currentProxy.resetInterval();
             proxies.offer(currentProxy);
+        } else {
+            logger.info("currentProxy lose " + currentProxy.getHttpHost().getHostName());
         }
         currentProxy = null;
         //提取代理
@@ -67,10 +72,9 @@ public class SimpleProxyPool {
         if (tmpProxy == null) {
             return null;
         }
-        if(testProxy(tmpProxy)){
+        if (testProxy(tmpProxy)) {
             currentProxy = tmpProxy;//标记
-            System.out.println("get proxy succeed!\t" + currentProxy.getHttpHost().getHostName() +
-                    "\tleft = " + proxies.size() + DateUtil.timeNow());//tttttttttttttttttttttt
+            logger.info("get proxy succeed!\t" + currentProxy.getHttpHost().getHostName() + "\tleft = " + proxies.size());
         }
         return currentProxy;
     }
@@ -81,7 +85,6 @@ public class SimpleProxyPool {
      * @throws IOException
      */
     public void getProxyToPool () throws IOException {
-//        System.out.println("获取代理..." + DateUtil.timeNow());//tttt
         String url = "http://www.xdaili.cn/freeproxy.html";
         getWebAPI(url);
         parsePage();
@@ -121,7 +124,7 @@ public class SimpleProxyPool {
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (TimeoutException e) {
-            System.err.println(proxy.getHttpHost() + "\ttest request timeout" + DateUtil.timeNow());
+            logger.error(proxy.getHttpHost().getHostName() + "\ttest request timeout");
 //            e.printStackTrace();
             service.shutdown();
             return false;
@@ -141,11 +144,9 @@ public class SimpleProxyPool {
         if (url.equals("")) {
             throw new IOException("url failed");
         }
-//        Request request = new Request(url);
-//        CrawlerSet set = CrawlerSet.setDefault();
-//        page = downloadPage.download(request, set, null);
+
         DownloadAjaxPage downloadAjaxPage = new DownloadAjaxPage();
-        page = downloadAjaxPage.getPage(new Request(url));
+        page = downloadAjaxPage.download(new Request(url), CrawlerSet.setDefault(), null);
 
         //将返回内容写入文件
         charset = page.getCharset();
@@ -192,7 +193,7 @@ public class SimpleProxyPool {
                 }
             }
         }
-        System.out.println("pool size：" + proxies.size() + DateUtil.timeNow());//ttttttttttttttttt
+        System.out.println("pool size：" + proxies.size() + DateUtil.printTimeNow());//ttttttttttttttttt
 
     }
 
