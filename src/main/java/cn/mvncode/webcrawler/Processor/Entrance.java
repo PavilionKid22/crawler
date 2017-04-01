@@ -48,8 +48,9 @@ public class Entrance {
 
         Date end = dateFormat.parse(DateUtil.timeNow());
         long time = (end.getTime() - start.getTime()) / (1000 * 60);//minute
-        logger.info("cost:" + String.valueOf(time) + "minutes");
+        logger.info("cost:" + String.valueOf(time) + " minutes");
         logger.info("End");
+
     }
 
 }

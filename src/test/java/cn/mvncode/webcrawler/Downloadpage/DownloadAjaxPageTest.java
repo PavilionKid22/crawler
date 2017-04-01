@@ -10,7 +10,9 @@ import org.junit.Test;
 public class DownloadAjaxPageTest {
     @Test
     public void getPage () throws Exception {
-        new DownloadAjaxPage().download(new Request("http://www.xdaili.cn/freeproxy.html"), CrawlerSet.setDefault(), null);
+        new DownloadAjaxPage().download(new Request("https://movie.douban.com/explore#!type=movie&tag=%E7%83%AD%E9%97%A8&sort=recommend&page_limit=20&page_start=0"),
+                CrawlerSet.setDefault(),
+                null);
     }
 
 }
