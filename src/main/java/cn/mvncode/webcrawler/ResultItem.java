@@ -12,10 +12,21 @@ public class ResultItem {
 
     private Map<String, String> comment = new LinkedHashMap<String, String>();
 
+    private Map<String,Map<String,Object>> data = new LinkedHashMap<String,Map<String,Object>>();
+
     private Request request;
 
     private CrawlerSet crawlerSet;
 
+
+    public Map<String, Map<String, Object>> getData () {
+        return data;
+    }
+
+    public ResultItem putData (String title,Map<String ,Object> comments) {
+        data.put(title,comments);
+        return this;
+    }
 
     public Map<String, String> getComment () {
         return comment;
@@ -42,12 +53,12 @@ public class ResultItem {
         this.request = request;
     }
 
-    public <T> ResultItem put (String key, T value) {
+    public <T> ResultItem putField (String key, T value) {
         fields.put(key, value);
         return this;
     }
 
-    public <T> T get (String key) {
+    public <T> T getField (String key) {
         Object o = fields.get(key);
         if (o == null) {
             return null;

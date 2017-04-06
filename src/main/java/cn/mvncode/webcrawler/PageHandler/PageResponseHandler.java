@@ -14,7 +14,6 @@ import java.io.IOException;
  */
 public abstract class PageResponseHandler {
 
-    public static ResultItem resultItem = new ResultItem();
     public static Proxy proxy;
 
     public abstract ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader) throws IOException;

@@ -227,7 +227,7 @@ public class CrawlerSet {
 
     /**
      * 设定重试次数
-     * 默认0次
+     * 默认3次
      *
      * @param retryTimes
      * @return

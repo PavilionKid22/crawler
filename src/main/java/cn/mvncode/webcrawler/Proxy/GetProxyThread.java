@@ -1,6 +1,5 @@
 package cn.mvncode.webcrawler.Proxy;
 
-import cn.mvncode.webcrawler.Utils.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

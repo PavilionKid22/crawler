@@ -17,7 +17,7 @@ public class ConsoleTest {
                 "__utmc=30149280; __utmz=30149280.1490011191.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmv=30149280.15933; " +
                 "__utma=223695111.451825191.1490011191.1490064491.1490077137.4; __utmb=223695111.0.10.1490077137; __utmc=223695111; " +
                 "__utmz=223695111.1490011191.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)");
-        new Console(set, new Request("https://movie.douban.com/subject/26648249/comments?status=P"), null).process();
+        new Console().process(set, new Request("https://movie.douban.com/subject/26648249/comments?status=P"), null);
     }
 
 }

@@ -5,6 +5,8 @@ import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
@@ -25,8 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * 下载网页
@@ -34,9 +37,31 @@ import java.util.Map;
  */
 public class DownloadPage extends Downloader {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static Logger logger = LoggerFactory.getLogger(DownloadPage.class);
 
-    private final Map<String, CloseableHttpClient> httpClients = new HashMap<String, CloseableHttpClient>();
+    private Map<String, CloseableHttpClient> httpClients = new HashMap<String, CloseableHttpClient>();
+
+    private static List<String> userAgents = new ArrayList<String>();
+
+    static {
+        String path = "D:\\IdeaPro\\crawler\\src\\main\\resources\\userAgent.json";
+        String userAgentContent = null;
+        try {
+            byte[] contentBytes = Files.readAllBytes(Paths.get(path));
+            userAgentContent = new String(contentBytes);
+        } catch (IOException e) {
+//            e.printStackTrace();
+            logger.error("read userAgent.json failed");
+        }
+        JSONObject jsonObject = JSONObject.fromObject(userAgentContent);
+        JSONArray jsonArray = jsonObject.getJSONArray("User-Agents");
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject tmpJson = JSONObject.fromObject(jsonArray.get(i));
+            String userAgent = tmpJson.getString("User-Agent");
+            userAgents.add(userAgent);
+        }
+    }
+
 
     /**
      * 获取客户端(beta0.1.1)
@@ -51,7 +76,7 @@ public class DownloadPage extends Downloader {
         String domain = set.getDomain();
         CloseableHttpClient httpClient = httpClients.get(domain);
         if (httpClient == null) {
-            synchronized (this){//原子
+            synchronized (this) {//原子
                 httpClient = HttpClientFactory.getClient(set, proxy);
                 httpClients.put(domain, httpClient);
             }
@@ -63,6 +88,9 @@ public class DownloadPage extends Downloader {
      * 下载网页并保存(beta0.1.1)
      *
      * @param request
+     * @param crawlerSet
+     * @param proxy
+     * @return
      */
     @Override
     public Page download (Request request, CrawlerSet crawlerSet, Proxy proxy) {
@@ -96,13 +124,17 @@ public class DownloadPage extends Downloader {
      * 实现HttpUriRequest接口(beta0.1.1)
      *
      * @param request
+     * @param crawlerSet
      * @return
      */
     private HttpUriRequest getHttpUriRequest (Request request, CrawlerSet crawlerSet) {
         RequestBuilder requestBuilder = selectRequestMethod(request).setUri(request.getUrl());
         //伪装爬虫
-        requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
+//        requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+//                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
+        int index = new Random().nextInt(userAgents.size() - 1 - 0 + 1);
+        String tmpUserAgent = userAgents.get(index);
+        requestBuilder.addHeader("User_Agent", tmpUserAgent);
         //添加Cookie(有必要时)
         if (!crawlerSet.getDefaultCookies().isEmpty()) {
             for (Map.Entry<String, String> entry : crawlerSet.getDefaultCookies().entrySet()) {

@@ -50,7 +50,9 @@ public class HttpClientFactory {
                 .build();
         poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager(registry);
         //路由基础的连接
-        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(100);
+        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(200);
+        //设置整个连接池最大连接数
+        poolingHttpClientConnectionManager.setMaxTotal(400);
     }
 
     /**
@@ -130,7 +132,7 @@ public class HttpClientFactory {
         httpClientBuilder.setRedirectStrategy(new CustomRedirectStrategy());
 
         //Socket设置
-        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(5000).setSoKeepAlive(true).setTcpNoDelay(true).build();
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(20000).setSoKeepAlive(true).setTcpNoDelay(true).build();
         httpClientBuilder.setDefaultSocketConfig(socketConfig);
         poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
 

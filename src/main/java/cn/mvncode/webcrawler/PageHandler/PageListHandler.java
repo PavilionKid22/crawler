@@ -25,6 +25,8 @@ public class PageListHandler extends PageResponseHandler {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private ResultItem resultItem;
+
     /**
      * 获取结果
      *
@@ -37,6 +39,7 @@ public class PageListHandler extends PageResponseHandler {
      */
     @Override
     public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader) throws IOException {
+        resultItem = new ResultItem();
         this.proxy = proxy;
         handleResponse(seek, set, downloader);
         return resultItem;
@@ -60,7 +63,7 @@ public class PageListHandler extends PageResponseHandler {
                 JSONObject tmpJson = JSONObject.fromObject(array.getString(i));//转化为json
                 String title = tmpJson.getString("title");
                 String url = tmpJson.getString("url");
-                resultItem.put(title, url);
+                resultItem.putField(title, url);
             }
         }
 
@@ -94,7 +97,7 @@ public class PageListHandler extends PageResponseHandler {
                 count += 20;
                 continue;
             }
-            if (tmpPage.getPlainText().equals(jsonNull)) {
+            if (tmpPage.getPlainText().equals(jsonNull) || tmpPage.getPlainText() == null) {
                 break;
             }
             //将Json字符串转化为Json对象
