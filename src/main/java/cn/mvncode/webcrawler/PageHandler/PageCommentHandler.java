@@ -135,12 +135,15 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
             avator.append(name.attr("title")).append("(")
                     .append(element.attr("data-cid")).append(")");
 
-            //获取评论内容，点赞数和日期
+            //获取评论内容，点赞数和日期，推荐星数
             Elements sentence = element.select("p");
             Elements votes = element.select("span.votes");
             Elements time = element.select("span.comment-time");
+            Elements star = element.select("span.allstar40 rating");
             comment.append(sentence.text()).append("\t(votes:").append(votes.text())
-                    .append("\ttime:").append(time.attr("title")).append(")");
+                    .append("\ttime:").append(time.attr("title"))
+                    .append("\tstar:").append(star.attr("title"))
+                    .append(")");
 
             comments.put(avator.toString(), comment.toString());
         }
@@ -186,7 +189,7 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
             page.removeTargetUrl(page.getRequest());
             //抓取间隔
             try {
-                TimeUnit.MILLISECONDS.sleep(new Random().nextInt(5000 - 1000 + 1) + 1000);
+                TimeUnit.MILLISECONDS.sleep(new Random().nextInt(4000 - 1000 + 1) + 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
