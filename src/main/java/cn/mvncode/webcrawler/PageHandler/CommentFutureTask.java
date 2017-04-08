@@ -37,8 +37,12 @@ public class CommentFutureTask extends FutureTask<ResultItem> {
             e.printStackTrace();
         }
         if (commentResult != null) {
-            Console.list.put(name, commentResult);
-            System.out.println(Console.list.size());//tttttttttttttttttttttt
+            synchronized (this){
+                Console.list.put(name, commentResult);
+                Console.updateCommentFlag = true;
+                Console.tableName = name;
+                System.out.println(Console.list.size());//tttttttttttttttttttttt
+            }
         }
     }
 

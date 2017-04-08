@@ -19,13 +19,24 @@ public class Entrance {
     private static final Logger logger = LoggerFactory.getLogger(Entrance.class);
 //    private static DateFormat dateFormat = new SimpleDateFormat("yy-MM-dd hh:mm:ss");
 
-    private static final String path = "D:\\IdeaPro\\crawler\\src\\main\\resources\\cookie.txt";
+//    private static final String path = "D:\\IdeaPro\\crawler\\src\\main\\resources\\cookie.txt";
 
 
     public static void main (String[] args) throws ParseException {
 
         logger.info("Start:");
 
+        String cookie = getCookie();
+
+        CrawlerSet set = CrawlerSet.setDefault().setLaunchProxyPool(false).addCookie("Cookie",cookie);
+        Request request = new Request("https://movie.douban.com/explore#!type=movie&tag=%E7%83%AD%E9%97%A8&sort=time&page_limit=20&page_start=0");
+
+        new Console().process(set, request, null);
+
+    }
+
+    public static String getCookie(){
+        String path = "D:\\IdeaPro\\crawler\\src\\main\\resources\\cookie.txt";
         String cookie = null;
         try {
             byte[] content = Files.readAllBytes(Paths.get(path));
@@ -33,13 +44,7 @@ public class Entrance {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        CrawlerSet set = CrawlerSet.setDefault().setLaunchProxyPool(false);
-        set.addCookie("Cookie",cookie);
-        Request request = new Request("https://movie.douban.com/explore#!type=movie&tag=%E7%83%AD%E9%97%A8&sort=time&page_limit=20&page_start=0");
-
-        new Console().process(set, request, null);
-
+        return cookie;
     }
 
 }

@@ -8,11 +8,11 @@ import java.util.*;
  */
 public class ResultItem {
 
-    private Map<String, Object> fields = new LinkedHashMap<String, Object>();
+    private Map<String, Object> fields = new LinkedHashMap<String, Object>();//存储目标url集(title, url)
 
-    private Map<String, String> comment = new LinkedHashMap<String, String>();
+    private Map<String, String> comment = new LinkedHashMap<String, String>();//存储评论内容(用户+ID, 评论内容+点赞数+日期+推荐星数)
 
-    private Map<String,Map<String,Object>> data = new LinkedHashMap<String,Map<String,Object>>();
+    private Map<String, Map<String, Object>> data = new LinkedHashMap<String, Map<String, Object>>();
 
     private Request request;
 
@@ -23,8 +23,8 @@ public class ResultItem {
         return data;
     }
 
-    public ResultItem putData (String title,Map<String ,Object> comments) {
-        data.put(title,comments);
+    public ResultItem putData (String title, Map<String, Object> comments) {
+        data.put(title, comments);
         return this;
     }
 

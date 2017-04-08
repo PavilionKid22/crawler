@@ -76,7 +76,7 @@ public class DownloadPage extends Downloader {
         String domain = set.getDomain();
         CloseableHttpClient httpClient = httpClients.get(domain);
         if (httpClient == null) {
-            synchronized (this) {//原子
+            synchronized (this) {
                 httpClient = HttpClientFactory.getClient(set, proxy);
                 httpClients.put(domain, httpClient);
             }
@@ -130,8 +130,6 @@ public class DownloadPage extends Downloader {
     private HttpUriRequest getHttpUriRequest (Request request, CrawlerSet crawlerSet) {
         RequestBuilder requestBuilder = selectRequestMethod(request).setUri(request.getUrl());
         //伪装爬虫
-//        requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-//                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36");
         int index = new Random().nextInt(userAgents.size() - 1 - 0 + 1);
         String tmpUserAgent = userAgents.get(index);
         requestBuilder.addHeader("User_Agent", tmpUserAgent);

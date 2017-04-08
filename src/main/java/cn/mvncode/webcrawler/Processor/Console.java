@@ -11,7 +11,6 @@ import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
 import cn.mvncode.webcrawler.Utils.CloseUtil;
-import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +26,14 @@ public class Console implements Observer {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private ExecutorService service = Executors.newFixedThreadPool(3);
+    private ExecutorService commentHandleService = Executors.newFixedThreadPool(3);//commentHandler线程池
+    private ExecutorService updateDataBaseService = Executors.newFixedThreadPool(3);//更新数据库线程池
 
     private Map<String, PageCommentHandler> pageCommentHandlerMaps = new HashMap<String, PageCommentHandler>();
 
     public static Map<String, ResultItem> list = new HashMap<String, ResultItem>();
+    public static boolean updateCommentFlag = false;
+    public static String tableName = null;
 
     private CrawlerSet set;
     private Request request;
@@ -51,6 +53,7 @@ public class Console implements Observer {
         initComponent(set, request, proxy);
 
         //处理网页
+        //抓取url集
         logger.info("getting url list...");
         ResultItem urlList = null;
         try {
@@ -60,7 +63,7 @@ public class Console implements Observer {
             logger.error("list get failed");
         }
         logger.info(Integer.toString(urlList.getFields().size()));
-
+        //抓取评论
         logger.info("getting comments...");
         for (Map.Entry<String, Object> entry : urlList.getFields().entrySet()) {
             String title = entry.getKey();
@@ -68,7 +71,7 @@ public class Console implements Observer {
             PageCommentHandler pageCommentHandler = getPageCommentHandler(seek, title);
 
             CommentFutureTask task = new CommentFutureTask(pageCommentHandler, title);
-            service.execute(task);
+            commentHandleService.execute(task);
             try {
                 TimeUnit.MILLISECONDS.sleep(10 * 1000);
             } catch (InterruptedException e) {
@@ -76,8 +79,29 @@ public class Console implements Observer {
             }
         }
 
-        ResultItem data = null;
-
+//        //comment写入数据库
+//        int count = 0;
+//        while (true) {
+//            if (updateCommentFlag) {//申请一个线程
+//                logger.info("push into database now...");
+//                if (tableName == null) {
+//                    updateCommentFlag = false;
+//                    continue;
+//                }
+//                CommentDataBase dataBase = new CommentDataBase(tableName, list.get(tableName));
+//                updateDataBaseService.execute(dataBase);
+//                count++;
+//                updateCommentFlag = false;
+//            }
+//            if (count == urlList.getFields().size()) {
+//                break;
+//            }
+//            try {
+//                TimeUnit.MILLISECONDS.sleep(2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
         //关闭构件
         close();
@@ -109,9 +133,7 @@ public class Console implements Observer {
      * 未完成
      */
     public void initComponent (CrawlerSet set, Request request, Proxy proxy) {
-//        if (request != null) {
-//            set.setDomain(UrlUtils.getDomain(request.getUrl()));
-//        }
+
         this.set = set;
         this.request = request;
         this.proxy = proxy;
@@ -131,7 +153,8 @@ public class Console implements Observer {
      */
     public void close () {
         proxyThread.close();
-        service.shutdown();
+        commentHandleService.shutdown();
+        updateDataBaseService.shutdown();
         CloseUtil.destroyEach(pageListHandler);
         CloseUtil.destroyEach(downloader);
     }

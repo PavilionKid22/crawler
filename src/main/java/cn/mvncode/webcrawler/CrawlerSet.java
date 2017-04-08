@@ -26,13 +26,11 @@ public class CrawlerSet {
 
     private int sleepTime = 5000;
 
-    private int retryTimes = 3;
+    private int retryTimes = 5;
 
     private int cycleRetryTimes = 3;
 
-    private int timeOut = 5000;
-
-    private int retrySleepTime = 2000;
+    private int timeOut = 20000;
 
     private boolean isLaunchProxyPool = false;
 
@@ -40,7 +38,6 @@ public class CrawlerSet {
 
     private Set<Integer> acceptStatusCode = DEFAULT_STATUS_CODE_SET;
 
-    private Map<String, String> headers = new HashMap<String, String>();
 
     /**
      * 初始化DEFAULT_STATUS_CODE_SET
@@ -209,22 +206,6 @@ public class CrawlerSet {
         return retryTimes;
     }
 
-    public Map<String, String> getHeaders () {
-        return headers;
-    }
-
-    /**
-     * 添加请求头
-     *
-     * @param key
-     * @param value
-     * @return
-     */
-    public CrawlerSet addHeader (String key, String value) {
-        headers.put(key, value);
-        return this;
-    }
-
     /**
      * 设定重试次数
      * 默认3次
@@ -252,15 +233,6 @@ public class CrawlerSet {
         return this;
     }
 
-    public int getRetrySleepTime () {
-        return retrySleepTime;
-    }
-
-    public CrawlerSet setRetrySleepTime (int retrySleepTime) {
-        this.retrySleepTime = retrySleepTime;
-        return this;
-    }
-
 
     @Override
     public boolean equals (Object o) {
@@ -279,7 +251,6 @@ public class CrawlerSet {
         if (defaultCookies != null ? !defaultCookies.equals(crawlerSet.defaultCookies) : crawlerSet.defaultCookies != null)
             return false;
         if (domain != null ? !domain.equals(crawlerSet.domain) : crawlerSet.domain != null) return false;
-        if (headers != null ? !headers.equals(crawlerSet.headers) : crawlerSet.headers != null) return false;
         if (startRequests != null ? !startRequests.equals(crawlerSet.startRequests) : crawlerSet.startRequests != null)
             return false;
 
@@ -297,7 +268,6 @@ public class CrawlerSet {
         result = 31 * result + cycleRetryTimes;
         result = 31 * result + timeOut;
         result = 31 * result + (acceptStatusCode != null ? acceptStatusCode.hashCode() : 0);
-        result = 31 * result + (headers != null ? headers.hashCode() : 0);
         return result;
     }
 
@@ -313,9 +283,7 @@ public class CrawlerSet {
                 ", retryTimes=" + retryTimes +
                 ", cycleRetryTimes=" + cycleRetryTimes +
                 ", timeOut=" + timeOut +
-                ", retrySleepTime=" + retrySleepTime +
                 ", acceptStatusCode=" + acceptStatusCode +
-                ", headers=" + headers +
                 '}';
     }
 

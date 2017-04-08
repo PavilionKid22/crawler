@@ -2,9 +2,11 @@ package cn.mvncode.webcrawler.Downloadpage;
 
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Proxy.Proxy;
-import org.apache.http.auth.AuthScope;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.CookieStore;
-import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpRequestRetryHandler;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
@@ -15,18 +17,22 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
-import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.protocol.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.net.ProxySelector;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Map;
 
 /**
  * 获取客户端
@@ -34,6 +40,8 @@ import java.util.Map;
  * Created by Pavilion on 2017/3/14.
  */
 public class HttpClientFactory {
+
+    private static Logger logger = LoggerFactory.getLogger(HttpClientFactory.class.getName());
 
     private static PoolingHttpClientConnectionManager poolingHttpClientConnectionManager;
 
@@ -132,17 +140,56 @@ public class HttpClientFactory {
         httpClientBuilder.setRedirectStrategy(new CustomRedirectStrategy());
 
         //Socket设置
-        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(20000).setSoKeepAlive(true).setTcpNoDelay(true).build();
+        SocketConfig socketConfig = SocketConfig.custom()
+                .setSoTimeout(CrawlerSet.set().getTimeOut())
+                .setSoKeepAlive(true)
+                .setTcpNoDelay(true).build();
         httpClientBuilder.setDefaultSocketConfig(socketConfig);
         poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
 
         //错误恢复机制
         if (crawlerSet != null) {
-            httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(crawlerSet.getRetryTimes(), true));
+//            httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(crawlerSet.getRetryTimes(), true));
+            HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
+                @Override
+                public boolean retryRequest (IOException e, int i, HttpContext httpContext) {
+                    if (i >= CrawlerSet.set().getRetryTimes()) {
+                        // 设定重试次数
+                        return false;
+                    }
+                    if (e instanceof InterruptedIOException) {
+                        // Timeout
+                        logger.error("request timeout");
+                        return false;
+                    }
+                    if (e instanceof UnknownHostException) {
+                        // Unknown host
+                        logger.error("request unknown host");
+                        return false;
+                    }
+                    if (e instanceof ConnectException) {
+                        // Connection refused
+                        logger.error("request connection refused");
+                        return false;
+                    }
+                    if (e instanceof SSLException) {
+                        // SSL handshake exception
+                        logger.error("request SSL handshake exception");
+                        return false;
+                    }
+                    HttpClientContext clientContext = HttpClientContext.adapt(httpContext);
+                    HttpRequest request = clientContext.getRequest();
+                    boolean idempotent = !(request instanceof HttpEntityEnclosingRequest);
+                    if (idempotent) {
+                        // Retry if the request is considered idempotent
+                        return true;
+                    }
+                    return false;
+                }
+            };
+            httpClientBuilder.setRetryHandler(retryHandler);
         }
 
-        //Cookie策略定制
-//        generateCookie(httpClientBuilder, crawlerSet);
 
         return httpClientBuilder.build();
     }

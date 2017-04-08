@@ -13,9 +13,9 @@ import java.util.Map;
 /**
  * Created by Pavilion on 2017/3/21.
  */
-public class DataBase implements Runnable {
+public class CommentDataBase implements Runnable {
 
-    private Logger logger = LoggerFactory.getLogger(DataBase.class.getName());
+    private Logger logger = LoggerFactory.getLogger(CommentDataBase.class.getName());
     private boolean isRunning = true;
 
     private String tableName;
@@ -33,7 +33,7 @@ public class DataBase implements Runnable {
             ")DEFAULT CHARSET=utf8;";
 
 
-    public DataBase (String tableName, ResultItem result) {
+    public CommentDataBase (String tableName, ResultItem result) {
         this.tableName = tableName;
         this.result = result;
     }
