@@ -63,6 +63,7 @@ public class Console implements Observer {
             logger.error("list get failed");
         }
         logger.info(Integer.toString(urlList.getFields().size()));
+//        new Thread(new MoviesDataBase(urlList)).start();//写入数据库
         //抓取评论
         logger.info("getting comments...");
         for (Map.Entry<String, Object> entry : urlList.getFields().entrySet()) {

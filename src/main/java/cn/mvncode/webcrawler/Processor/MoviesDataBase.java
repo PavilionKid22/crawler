@@ -14,9 +14,9 @@ import java.util.Map;
 /**
  * Created by Pavilion on 2017/4/8.
  */
-public class MoivesDataBase implements Runnable{
+public class MoviesDataBase implements Runnable{
 
-    private Logger logger = LoggerFactory.getLogger(MoivesDataBase.class.getName());
+    private Logger logger = LoggerFactory.getLogger(MoviesDataBase.class.getName());
 
     private Connection conn;
     private boolean isRunning = true;
@@ -25,7 +25,7 @@ public class MoivesDataBase implements Runnable{
     private String tableName = "movies";
     private ResultItem fields;
 
-    public MoivesDataBase (ResultItem fields) {
+    public MoviesDataBase (ResultItem fields) {
         this.fields = fields;
     }
 
