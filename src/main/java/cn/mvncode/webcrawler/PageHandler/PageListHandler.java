@@ -21,11 +21,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Pavilion on 2017/3/28.
  */
-public class PageListHandler extends PageResponseHandler {
+public class PageListHandler implements PageResponseHandler {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private ResultItem resultItem;
+    private Proxy proxy;
 
     /**
      * 获取结果
@@ -38,10 +39,15 @@ public class PageListHandler extends PageResponseHandler {
      * @throws IOException
      */
     @Override
-    public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader) throws IOException {
+    public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader) {
         resultItem = new ResultItem();
         this.proxy = proxy;
-        handleResponse(seek, set, downloader);
+        try {
+            logger.info("update url table...");
+            handleResponse(seek, set, downloader);
+        } catch (IOException e) {
+            logger.error("update table failed: " + e.getMessage());
+        }
         return resultItem;
     }
 

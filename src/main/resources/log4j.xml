@@ -6,7 +6,7 @@
     <!-- 输出日志到控制台  ConsoleAppender -->
     <appender name="stout" class="org.apache.log4j.ConsoleAppender">
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%-5p (%F:%L)## %m %d{yy-MM-dd HH:mm:ss,SSS}%n"/>
+            <param name="ConversionPattern" value="%d{MM-dd HH:mm:ss,SSS} %-5p (%F:%L)## %m %n"/>
         </layout>
     </appender>
 

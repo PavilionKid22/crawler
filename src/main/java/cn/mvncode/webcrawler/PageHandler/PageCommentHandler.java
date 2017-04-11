@@ -6,7 +6,6 @@ import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
-import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.StatusLine;
 import org.jsoup.Jsoup;
@@ -19,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -29,9 +29,11 @@ import java.util.regex.Pattern;
  * 网页解析
  * Created by Pavilion on 2017/3/16.
  */
-public class PageCommentHandler extends PageResponseHandler implements Callable<ResultItem> {
+public class PageCommentHandler extends Observable implements Callable<ResultItem>, PageResponseHandler {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+
+    private boolean isRunning;
 
     private ResultItem resultItem;
 
@@ -44,13 +46,16 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
     private Downloader downloader;
     private String name;
 
+
     public PageCommentHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader, String name) {
+        isRunning = true;
         this.seek = seek;
         this.set = set;
         this.proxy = proxy;
         this.downloader = downloader;
         this.name = name;
         resultItem = new ResultItem();
+        resultItem.setTitle(name);
         set.setDomain(seek.getUrl());
     }
 
@@ -60,7 +65,7 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
      * @return result
      */
     @Override
-    public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader) throws IOException {
+    public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader){
         return null;
     }
 
@@ -132,18 +137,25 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
             StringBuffer avator = new StringBuffer();
             //获取用户名和id
             Elements name = element.select("a[title]");
-            avator.append(name.attr("title")).append("\t")
-                    .append(element.attr("data-cid"));
+            avator.append(element.attr("data-cid"))
+                    .append("\t").append(name.attr("title"));
 
-            //获取评论内容，点赞数和日期，推荐星数
+            //获取评论内容，点赞数和日期
             Elements sentence = element.select("p");
             Elements votes = element.select("span.votes");
             Elements time = element.select("span.comment-time");
-            Elements star = element.select("span.allstar40 rating");
-            comment.append(sentence.text())
-                    .append("\t").append(votes.text())
+            //推荐星数
+            String[] split = element.select("span[title]").toString().split("\n");
+            String star = "null";
+            if (split.length > 1) {
+                String tmpStr = "allstar";
+                int index = StringUtils.indexOf(split[0], tmpStr) + tmpStr.length();
+                star = split[0].substring(index, index + 2);
+            }
+            comment.append(votes.text())
+                    .append("\t").append(star)
                     .append("\t").append(time.attr("title"))
-                    .append("\t").append(star.attr("title"));
+                    .append("\t").append(sentence.text());
 
             comments.put(avator.toString(), comment.toString());
         }
@@ -151,6 +163,25 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
         return comments;
     }
 
+    /**
+     * 判断抓取是否需要人工干预
+     *
+     * @param page
+     * @return
+     */
+    private boolean getError (Page page) {
+        boolean flag = false;
+        String response = "…你访问豆瓣的方式有点像机器人程序。为了保护用户的数据，请向我们证明你是人类:";
+        int statusCode = page.getStatusCode();
+        if (page != null) {
+            Document document = Jsoup.parse(page.getPlainText());
+            Elements h2 = document.select("h2");
+            if (statusCode == 403 && h2.text().equals(response)) {
+                return true;
+            }
+        }
+        return flag;
+    }
 
     @Override
     public ResultItem call () throws Exception {
@@ -158,10 +189,8 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
         handleResponse(seek, set, downloader);
         //初始化refer
         refer = page.getUrl();
-//        System.out.println("Refer is " + refer);
-
         //解析网页
-        while (!page.getTargetUrls().isEmpty()) {
+        while (isRunning) {
             logger.info("Url = " + page.getUrl() + "\t" + name);
             if (proxy != null) {
                 logger.info("proxy = " + proxy.getHttpHost().getHostName());
@@ -189,12 +218,25 @@ public class PageCommentHandler extends PageResponseHandler implements Callable<
             page.removeTargetUrl(page.getRequest());
             //抓取间隔
             try {
-                TimeUnit.MILLISECONDS.sleep(new Random().nextInt(4000 - 800 + 1) + 1000);
+                TimeUnit.MILLISECONDS.sleep(new Random().nextInt(4000 - 1000 + 1) + 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //加载新页面
+            //点击新页面
             page = downloader.download(newRequest, set, proxy);
+            //测试网页是否需要人工干预
+            if (getError(page)) {
+                logger.error("Please Enter Verification Code");
+                synchronized (this) {
+                    setChanged();
+                    notifyObservers(this);//将该对象传给监听者
+                    wait();//挂起线程等待响应
+                }
+            }
+            //检验是否关闭线程
+            if (page.getTargetUrls().isEmpty()) {
+                isRunning = false;
+            }
         }
 
         return resultItem;

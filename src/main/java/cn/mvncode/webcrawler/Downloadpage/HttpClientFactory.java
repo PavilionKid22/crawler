@@ -149,11 +149,10 @@ public class HttpClientFactory {
 
         //错误恢复机制
         if (crawlerSet != null) {
-//            httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(crawlerSet.getRetryTimes(), true));
             HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
                 @Override
                 public boolean retryRequest (IOException e, int i, HttpContext httpContext) {
-                    if (i >= CrawlerSet.set().getRetryTimes()) {
+                    if (i >= crawlerSet.getRetryTimes()) {
                         // 设定重试次数
                         return false;
                     }

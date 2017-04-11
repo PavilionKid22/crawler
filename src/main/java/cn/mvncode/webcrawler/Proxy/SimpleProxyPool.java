@@ -125,7 +125,6 @@ public class SimpleProxyPool {
             e.printStackTrace();
         } catch (TimeoutException e) {
             logger.error(proxy.getHttpHost().getHostName() + "\ttest request timeout");
-//            e.printStackTrace();
             service.shutdown();
             return false;
         }

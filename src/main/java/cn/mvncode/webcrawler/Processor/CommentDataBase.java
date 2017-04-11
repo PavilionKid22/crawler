@@ -2,6 +2,7 @@ package cn.mvncode.webcrawler.Processor;
 
 import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Utils.DataBaseUtil;
+import cn.mvncode.webcrawler.Utils.MyStringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +10,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Pavilion on 2017/3/21.
@@ -21,20 +23,9 @@ public class CommentDataBase implements Runnable {
     private String tableName;
     private ResultItem result;
 
-    private Connection conn;
-
-    private String sql = "CREATE TABLE " + tableName + " (" +
-            "User VARCHAR(128) NOT NULL PRIMARY KEY," +
-            "UserID CHAR(10) NOT NULL," +
-            "Vote CHAR(8) NOT NULL," +
-            "Star CHAR(4) NOT NULL," +
-            "Date CHAR(40) NOT NULL," +
-            "Comment MEDIUMTEXT" +
-            ")DEFAULT CHARSET=utf8;";
-
 
     public CommentDataBase (String tableName, ResultItem result) {
-        this.tableName = tableName;
+        this.tableName = "tb_" + tableName;
         this.result = result;
     }
 
@@ -46,30 +37,32 @@ public class CommentDataBase implements Runnable {
      */
     public void insertData () throws SQLException {
 
-        conn = DataBaseUtil.getConnection();
-        conn.setAutoCommit(false);//设置手动提交
-        if (!DataBaseUtil.isConnection(conn)) {
-            logger.debug("reconnect...");
-            //do something
+        if (!DataBaseUtil.exitTable("moviebase", tableName)) {
+            String sql = "CREATE TABLE " + tableName + " (" +
+                    "UserID char(10) NOT NULL PRIMARY KEY," +
+                    "User varchar(128) NOT NULL," +
+                    "Vote char(8) NOT NULL," +
+                    "Star char(8) NOT NULL," +
+                    "Date char(40) NOT NULL," +
+                    "Comment mediumtext" +
+                    ")DEFAULT CHARSET=utf8;";
+            DataBaseUtil.createTable("moviebase", sql);
+            logger.info("create table " + tableName);
         } else {
-            if (!DataBaseUtil.exitTable(tableName, conn)) {
-                DataBaseUtil.createTable(conn, sql);
-            }
             List<String[]> data = new ArrayList<>();//所有数据
             for (Map.Entry<String, String> entry : result.getComment().entrySet()) {
                 String[] oneData = getData(entry.getKey(), entry.getValue());
-                if (oneData.length != 6) continue;
                 data.add(oneData);
             }
             //insert into tableName (User,UserID,Vote,Star,Date,Comment) values (.., .., ..);
             String[] columns = new String[6];
-            columns[0] = "User";
-            columns[1] = "UserID";
+            columns[0] = "UserID";
+            columns[1] = "User";
             columns[2] = "Vote";
             columns[3] = "Star";
-            columns[4] = "Data";
+            columns[4] = "Date";
             columns[5] = "Comment";
-            DataBaseUtil.insert(conn, tableName, columns, data);
+            DataBaseUtil.insert("moviebase", tableName, columns, data);
             isRunning = false;
         }
 
@@ -107,10 +100,11 @@ public class CommentDataBase implements Runnable {
             try {
                 insertData();
             } catch (SQLException e) {
-//                e.printStackTrace();
                 logger.error("insert data failed");
             }
         }
+        logger.info("insert comment over");
 
     }
+
 }

@@ -133,6 +133,19 @@ public class UrlUtils {
     }
 
     /**
+     * 提取豆瓣电影UID
+     *
+     * @param url
+     * @return
+     */
+    public static String getUID (String url) {
+        CharSequence cutChar = "subject/";
+        int index = StringUtils.indexOf(url, cutChar) + cutChar.length();
+        String UID = new String(url.substring(index, url.length() - 1));
+        return UID;
+    }
+
+    /**
      * 检验ip合法性
      *
      * @param ip

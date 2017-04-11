@@ -12,20 +12,20 @@ public class ResultItem {
 
     private Map<String, String> comment = new LinkedHashMap<String, String>();//存储评论内容(用户+ID, 评论内容+点赞数+日期+推荐星数)
 
-    private Map<String, Map<String, Object>> data = new LinkedHashMap<String, Map<String, Object>>();
+//    private Map<String, Map<String, Object>> data = new LinkedHashMap<String, Map<String, Object>>();
 
     private Request request;
 
     private CrawlerSet crawlerSet;
 
+    private String title;
 
-    public Map<String, Map<String, Object>> getData () {
-        return data;
+    public String getTitle () {
+        return title;
     }
 
-    public ResultItem putData (String title, Map<String, Object> comments) {
-        data.put(title, comments);
-        return this;
+    public void setTitle (String title) {
+        this.title = title;
     }
 
     public Map<String, String> getComment () {

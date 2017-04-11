@@ -1,8 +1,5 @@
 package cn.mvncode.webcrawler;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.UsernamePasswordCredentials;
-
 import java.util.*;
 
 /**
@@ -26,11 +23,11 @@ public class CrawlerSet {
 
     private int sleepTime = 5000;
 
-    private int retryTimes = 5;
+    private int retryTimes = 3;
 
     private int cycleRetryTimes = 3;
 
-    private int timeOut = 20000;
+    private int timeOut = 10000;
 
     private boolean isLaunchProxyPool = false;
 

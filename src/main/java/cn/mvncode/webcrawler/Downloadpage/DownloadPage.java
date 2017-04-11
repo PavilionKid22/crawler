@@ -104,8 +104,6 @@ public class DownloadPage extends Downloader {
         try {
             httpResponse = getResponse(httpClient, httpUriRequest);
         } catch (IOException e) {
-            logger.error("httpClient execute failed");
-//            e.printStackTrace();
             return page;
         }
 
@@ -113,7 +111,6 @@ public class DownloadPage extends Downloader {
             page = handleResponse(request, httpResponse, crawlerSet);
         } catch (IOException e) {
             logger.error("httpResponse failed");
-//            e.printStackTrace();
             return page;
         }
 
@@ -145,9 +142,9 @@ public class DownloadPage extends Downloader {
         }
         //定制请求规范
         requestBuilder.setConfig(RequestConfig.custom()
-                .setConnectTimeout(crawlerSet.getTimeOut())//连接超时
+                .setConnectTimeout(crawlerSet.getTimeOut() / 2)//连接超时
                 .setSocketTimeout(crawlerSet.getTimeOut())//请求获取数据的超时时间response
-                .setConnectionRequestTimeout(crawlerSet.getTimeOut())
+//                .setConnectionRequestTimeout(crawlerSet.getTimeOut())
                 .setCookieSpec(CookieSpecs.STANDARD)//管理cookie规范
                 .build());
 

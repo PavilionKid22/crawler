@@ -17,10 +17,6 @@ import java.text.ParseException;
 public class Entrance {
 
     private static final Logger logger = LoggerFactory.getLogger(Entrance.class);
-//    private static DateFormat dateFormat = new SimpleDateFormat("yy-MM-dd hh:mm:ss");
-
-//    private static final String path = "D:\\IdeaPro\\crawler\\src\\main\\resources\\cookie.txt";
-
 
     public static void main (String[] args) throws ParseException {
 
@@ -31,7 +27,7 @@ public class Entrance {
         CrawlerSet set = CrawlerSet.setDefault().setLaunchProxyPool(false).addCookie("Cookie",cookie);
         Request request = new Request("https://movie.douban.com/explore#!type=movie&tag=%E7%83%AD%E9%97%A8&sort=time&page_limit=20&page_start=0");
 
-        new Console().process(set, request, null);
+        new Console(set, request, null).process();
 
     }
 
