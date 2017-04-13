@@ -35,9 +35,6 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
 
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-    private boolean isRunning;
-    private boolean flag;
-
     private ResultItem resultItem;
 
     private Page page;
@@ -51,8 +48,6 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
 
 
     public PageCommentHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader, String name) {
-        isRunning = true;
-        flag = false;
         this.seek = seek;
         this.set = set;
         this.proxy = proxy;
@@ -60,7 +55,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
         this.name = name;
         resultItem = new ResultItem();
         resultItem.setTitle(name);
-        set.setDomain(UrlUtils.getDomain(seek.getUrl()));
+        set.setDomain(seek.getUrl());
     }
 
     /**
@@ -136,6 +131,10 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
         Map<String, String> comments = new LinkedHashMap<String, String>();
 
         Elements elements = document.select("div.comment-item");
+        String checkStr = "还没有人写过短评";
+        if (elements.text().equals(checkStr)) {
+            return null;
+        }
         for (Element element : elements) {
             StringBuffer comment = new StringBuffer();
             StringBuffer avator = new StringBuffer();
@@ -177,8 +176,8 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
         boolean flag = false;
         String response = "…你访问豆瓣的方式有点像机器人程序。为了保护用户的数据，请向我们证明你是人类:";
         int statusCode = page.getStatusCode();
-        if (page != null) {
-            Document document = Jsoup.parse(page.getPlainText());
+        if (page.getPlainText() != null) {
+            Document document = Jsoup.parse(page.getPlainText());//传入参数不能为null,否则会杀死线程
             Elements h2 = document.select("h2");
             if (statusCode == 403 && h2.text().equals(response)) {
                 return true;
@@ -187,6 +186,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
         return flag;
     }
 
+
     @Override
     public ResultItem call () throws Exception {
         //初始化page
@@ -194,60 +194,47 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
         //初始化refer
         refer = page.getUrl();
         //解析网页
-        while (isRunning) {
-            logger.info("Url = " + page.getUrl() + "\t" + name);
+        while (true) {
+            logger.info("Url = " + page.getUrl() + "\t" + name + "\t" + resultItem.getComment().size());
             if (proxy != null) {
                 logger.info("proxy = " + proxy.getHttpHost().getHostName());
             }
 
-            StatusLine statusLine = page.getHttpResponse().getStatusLine();
-            if (statusLine.getStatusCode() >= 300) {
-                isRunning = false;
-            }
             //格式化html
             Document document = Jsoup.parse(page.getPlainText());
             //获取内容
             Map<String, String> comments = getComments(document);
+            if (comments == null) break;
             for (Map.Entry<String, String> entry : comments.entrySet()) {
                 resultItem.addComment(entry.getKey(), entry.getValue());
             }
             //获取下一页url
             Request newRequest = getUrl(document, refer);
-            if (newRequest.getUrl().equals(refer.substring(0, StringUtils.indexOf(refer, "?status=P")) + "/")) {
-                break;
-            }
+            String referStr = refer.substring(0, StringUtils.indexOf(refer, "?status=P")) + "/";
+            if (newRequest.getUrl().equals(referStr)) break;
             //设置refer
             newRequest.setRefer(page.getUrl());
             //删除当前处理url
             page.removeTargetUrl(page.getRequest());
-            //抓取间隔
-            try {
-                TimeUnit.MILLISECONDS.sleep(new Random().nextInt(4000 - 1000 + 1) + 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             //点击新页面
             page = downloader.download(newRequest, set, proxy);
-            //测试网页是否需要人工干预
+            //测试网页是否需要人工干预(ip被封)
             if (getError(page)) {
                 logger.error("Please Enter Verification Code");
                 synchronized (this) {
                     setChanged();
                     notifyObservers(this);//将该对象传给监听者
-                    flag = true;//挂起标识
                     wait();//挂起线程等待响应
                 }
-            }
-            if (flag) {
                 page = downloader.download(newRequest, set, proxy);//重新点击页面
-                flag = false;
             }
+            //抓取间隔
+            TimeUnit.MILLISECONDS.sleep(new Random().nextInt(3000 - 1000 + 1) + 1000);
             //检验是否关闭线程
-            if (page.getTargetUrls().isEmpty()) {
-                isRunning = false;
-            }
+            if (page.getStatusCode() != 200) break;
         }
-
+        logger.info(name + ": comment catch over");
+        logger.info(name + ": comments size is " + resultItem.getComment().size());
         return resultItem;
     }
 

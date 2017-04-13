@@ -112,8 +112,6 @@ public class Page {
     public String toString () {
         return "Page{" +
                 "request=" + request +
-                ", plainText='" + plainText + '\'' +
-                ", url='" + url + '\'' +
                 ", statusCode='" + statusCode + '\'' +
                 '}';
     }

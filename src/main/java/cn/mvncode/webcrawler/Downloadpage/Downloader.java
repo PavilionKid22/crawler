@@ -5,6 +5,8 @@ import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 
+import java.io.IOException;
+
 /**
  * Created by Pavilion on 2017/3/28.
  */

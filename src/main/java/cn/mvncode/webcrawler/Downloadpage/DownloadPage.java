@@ -105,16 +105,21 @@ public class DownloadPage extends Downloader {
             httpResponse = getResponse(httpClient, httpUriRequest);
         } catch (IOException e) {
             logger.error(e.getMessage());
-            return page;
         }
 
         try {
             page = handleResponse(request, httpResponse, crawlerSet);
         } catch (IOException e) {
             logger.error(e.getMessage());
-            return page;
+            //确保连接释放回模拟器池
+            if (httpResponse != null) {
+                try {
+                    EntityUtils.consume(httpResponse.getEntity());
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
         }
-
         return page;
     }
 
@@ -145,7 +150,7 @@ public class DownloadPage extends Downloader {
         requestBuilder.setConfig(RequestConfig.custom()
                 .setConnectTimeout(crawlerSet.getTimeOut() / 2)//连接超时
                 .setSocketTimeout(crawlerSet.getTimeOut())//请求获取数据的超时时间response
-//                .setConnectionRequestTimeout(crawlerSet.getTimeOut())
+                .setConnectionRequestTimeout(crawlerSet.getTimeOut())
                 .setCookieSpec(CookieSpecs.STANDARD)//管理cookie规范
                 .build());
 
@@ -266,27 +271,31 @@ public class DownloadPage extends Downloader {
      */
     private Page handleResponse (Request request, HttpResponse httpResponse, CrawlerSet set) throws IOException {
 
+        Page page = new Page();
         String charset = set.getCharset();
+        int statusCode = 0;
         //获取content
-        String content;
-        byte[] contentBytes = IOUtils.toByteArray(httpResponse.getEntity().getContent());
-        if (charset == null) {
-            charset = getHtmlCharset(httpResponse, contentBytes);
-            if (charset != null) {
-                content = new String(contentBytes, charset);
+        String content = null;
+        if (httpResponse != null) {
+            byte[] contentBytes = IOUtils.toByteArray(httpResponse.getEntity().getContent());
+            if (charset == null) {
+                charset = getHtmlCharset(httpResponse, contentBytes);
+                if (charset != null) {
+                    content = new String(contentBytes, charset);
+                } else {
+                    content = new String(contentBytes);
+                }
             } else {
-                content = new String(contentBytes);
+                content = new String(contentBytes, charset);
             }
-        } else {
-            content = new String(contentBytes, charset);
+            statusCode = httpResponse.getStatusLine().getStatusCode();
         }
 
-        Page page = new Page();
+        page.setStatusCode(statusCode);
         page.setCharset(charset);
         page.setRequest(request);
         page.setHttpResponse(httpResponse);
         page.setPlainText(content);
-        page.setStatusCode(httpResponse.getStatusLine().getStatusCode());
         page.setUrl(request.getUrl());
         page.setCrawlerSet(set);
         page.addTargetUrl(request);//加入当前url进入待处理队列

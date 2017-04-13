@@ -143,7 +143,8 @@ public class HttpClientFactory {
         SocketConfig socketConfig = SocketConfig.custom()
                 .setSoTimeout(CrawlerSet.set().getTimeOut())
                 .setSoKeepAlive(true)
-                .setTcpNoDelay(true).build();
+                .setTcpNoDelay(true)
+                .build();
         httpClientBuilder.setDefaultSocketConfig(socketConfig);
         poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
 

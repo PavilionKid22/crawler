@@ -27,7 +27,7 @@ public class CrawlerSet {
 
     private int cycleRetryTimes = 3;
 
-    private int timeOut = 10000;
+    private int timeOut = 60000;
 
     private boolean isLaunchProxyPool = false;
 

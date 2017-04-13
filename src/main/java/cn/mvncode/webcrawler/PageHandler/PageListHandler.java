@@ -48,6 +48,7 @@ public class PageListHandler implements PageResponseHandler {
             handleResponse(seek, set, downloader);
         } catch (IOException e) {
             logger.error("update table failed: " + e.getMessage());
+            System.exit(-1);
         }
         return resultItem;
     }
@@ -84,7 +85,7 @@ public class PageListHandler implements PageResponseHandler {
      * @param downloader
      * @return
      */
-    public Set<JSONObject> getJSONs (Request targetUrl, CrawlerSet set, Downloader downloader) {
+    public Set<JSONObject> getJSONs (Request targetUrl, CrawlerSet set, Downloader downloader){
 
         Set<JSONObject> Jsons = new HashSet<JSONObject>();
         String url;
@@ -130,7 +131,7 @@ public class PageListHandler implements PageResponseHandler {
     public String getTag (String targetUrl) {
 
         int start = StringUtils.indexOf(targetUrl, "tag", 1);
-        int end = StringUtils.indexOf(targetUrl, "sort", start);
+        int end = StringUtils.indexOf(targetUrl, "page", start);
         String tag = targetUrl.substring(start + 4, end - 1);
 
         return tag;

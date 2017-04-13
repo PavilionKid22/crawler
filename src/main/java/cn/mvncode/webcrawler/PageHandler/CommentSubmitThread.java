@@ -7,9 +7,13 @@ import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.Utils.DataBaseUtil;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,7 +40,7 @@ public class CommentSubmitThread implements Runnable, Observer {
     private Downloader downloader;
 
     private boolean pauseFlag;
-    private List<Object> observableObjs = new ArrayList<>();
+    private Queue<Object> observableObjs = new ArrayDeque<>();
 
     private Downloader testDownloader = new DownloadPage();
     private Request testRequest = new Request("https://movie.douban.com/");
@@ -81,8 +85,7 @@ public class CommentSubmitThread implements Runnable, Observer {
             Request seek = new Request(entry.getValue());
             PageCommentHandler pageCommentHandler = getPageCommentHandler(seek, title);
             pageCommentHandler.addObserver(this);//注册监听者
-
-            CommentFutureTask task = new CommentFutureTask(pageCommentHandler);
+            CommentFutureTask task = new CommentFutureTask(pageCommentHandler);//包装线程
             commentHandleService.execute(task);
         }
         logger.info("submitThread over");
@@ -111,18 +114,21 @@ public class CommentSubmitThread implements Runnable, Observer {
     }
 
     /**
-     * 测试页面是否可以访问
+     * 测试页面是否可以访问(bug)
      *
      * @return
      */
     private boolean checkPage () {
         boolean flag = false;
         testPage = testDownloader.download(testRequest, set, null);
-        if (testPage != null) {
-            if (testPage.getStatusCode() == 200) {
+        String response = "…你访问豆瓣的方式有点像机器人程序。为了保护用户的数据，请向我们证明你是人类:";
+        int code = testPage.getStatusCode();
+        if (!testPage.getPlainText().isEmpty()) {
+            Document document = Jsoup.parse(testPage.getPlainText());
+            String text = document.select("h2").text();
+            if (!text.equals(response) && code == 200) {
                 flag = true;
             }
-            testPage = null;
         }
         return flag;
     }
@@ -139,7 +145,8 @@ public class CommentSubmitThread implements Runnable, Observer {
             }
             if (pauseFlag) {//线程故障处理
                 if (checkPage()) {
-                    for (Object obj : observableObjs) {
+                    for (int i = 0; i < observableObjs.size(); i++) {
+                        Object obj = observableObjs.poll();
                         synchronized (obj) {
                             obj.notify();
                             pauseFlag = false;
@@ -149,7 +156,7 @@ public class CommentSubmitThread implements Runnable, Observer {
                 }
             }
             try {
-                TimeUnit.MILLISECONDS.sleep(5000);//每3秒检测一次
+                TimeUnit.MILLISECONDS.sleep(new Random().nextInt(6000 - 4000 + 1) + 4000);//每4到6秒检测一次
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

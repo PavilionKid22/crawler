@@ -76,6 +76,7 @@ public class CommentPushDatabase implements Runnable {
                 count++;
                 updateCommentFlag = false;
                 if (count == submitThreadCount) {
+                    logger.info("terminated submit pushThread");
                     updateDataBaseService.shutdown();
                 }
             }

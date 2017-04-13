@@ -25,13 +25,13 @@ public class Entrance {
         String cookie = getCookie();
 
         CrawlerSet set = CrawlerSet.setDefault().setLaunchProxyPool(false).addCookie("Cookie",cookie);
-        Request request = new Request("https://movie.douban.com/explore#!type=movie&tag=%E7%83%AD%E9%97%A8&sort=time&page_limit=20&page_start=0");
-
+        Request request = new Request("https://movie.douban.com/explore#!type=movie&tag=%E6%9C%80%E6%96%B0&page_limit=20&page_start=0");
         new Console(set, request, null).process();
+
 
     }
 
-    public static String getCookie(){
+    public static String getCookie () {
         String path = "D:\\IdeaPro\\crawler\\src\\main\\resources\\cookie.txt";
         String cookie = null;
         try {

@@ -80,7 +80,6 @@ public class DownloadAjaxPage extends Downloader {
      *
      * @param request
      * @return
-     * @throws IOException
      */
     @Override
     public Page download (Request request, CrawlerSet set, Proxy proxy) {
