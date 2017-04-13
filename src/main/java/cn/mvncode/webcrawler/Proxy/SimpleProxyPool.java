@@ -24,6 +24,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.concurrent.*;
 
 /**
+ * 代理池
  * Created by Pavilion on 2017/3/20.
  */
 public class SimpleProxyPool {

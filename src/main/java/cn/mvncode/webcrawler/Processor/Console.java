@@ -2,6 +2,7 @@ package cn.mvncode.webcrawler.Processor;
 
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Downloadpage.DownloadPage;
+import cn.mvncode.webcrawler.PageHandler.CommentPushDatabase;
 import cn.mvncode.webcrawler.PageHandler.CommentSubmitThread;
 import cn.mvncode.webcrawler.PageHandler.PageListHandler;
 import cn.mvncode.webcrawler.Proxy.GetProxyThread;
@@ -14,7 +15,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 /**
- * 输出到控制台
+ * 线程调度台
  * Created by Pavilion on 2017/3/17.
  */
 public class Console implements Observer {
@@ -36,7 +37,7 @@ public class Console implements Observer {
     /**
      * 处理逻辑
      */
-    public void process () {
+    public void process (){
 
         //初始化构件
         initComponent();
@@ -45,16 +46,23 @@ public class Console implements Observer {
         //抓取url集
         ResultItem urlList = pageListHandler.getHandler(request, set, proxy, downloader);
         //更新数据库表movies
-        new Thread(new MoviesDataBase(urlList)).start();
+        Thread updateMoviesThread = new Thread(new MoviesDataBase(urlList));
+        updateMoviesThread.start();
+        try {
+            updateMoviesThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         //抓取评论
         new Thread(new CommentSubmitThread(set, proxy, downloader)).start();
         //写入数据库
-//        Thread pushDatabaseThread = new Thread(new CommentPushDatabase());
-//        try {
-//            pushDatabaseThread.join();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        Thread pushDatabaseThread = new Thread(new CommentPushDatabase());
+        pushDatabaseThread.start();
+        try {
+            pushDatabaseThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         //关闭构件
         close();

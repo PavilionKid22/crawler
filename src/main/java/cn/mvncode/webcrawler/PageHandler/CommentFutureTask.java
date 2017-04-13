@@ -28,7 +28,8 @@ public class CommentFutureTask extends FutureTask<ResultItem> {
     protected void done () {
         try {
             commentResult = get();
-            logger.info(commentResult.getTitle() + " comment fetch over, size is " + Integer.toString(commentResult.getComment().size()));
+            logger.info(commentResult.getTitle() + " comment fetch over, size is "
+                    + Integer.toString(commentResult.getComment().size()));
         } catch (InterruptedException e) {
             logger.error("PageCommentHandler execute failed");
         } catch (ExecutionException e) {

@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 抓取所有页面的url
  * Created by Pavilion on 2017/3/28.
  */
 public class PageListHandler implements PageResponseHandler {

@@ -12,8 +12,6 @@ public class ResultItem {
 
     private Map<String, String> comment = new LinkedHashMap<String, String>();//存储评论内容(用户+ID, 评论内容+点赞数+日期+推荐星数)
 
-//    private Map<String, Map<String, Object>> data = new LinkedHashMap<String, Map<String, Object>>();
-
     private Request request;
 
     private CrawlerSet crawlerSet;

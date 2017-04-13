@@ -5,10 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Date;
 
 /**
  * 为外界提供数据库连接对象
@@ -19,11 +19,9 @@ public class DataBaseUtil {
     private static Logger logger = LoggerFactory.getLogger(CommentDataBase.class.getName());
 
     private static String driver = "com.mysql.cj.jdbc.Driver";
-    private static String user = "root";
-    private static String pwd = "Pavilion5556";
 
-    private static Connection conn;//声明数据库连接对象
-    private static PreparedStatement preparedStatement;//处理字段
+//    private static Connection conn;//声明数据库连接对象
+//    private static PreparedStatement preparedStatement;//处理字段
 
     /**
      * 加载驱动
@@ -48,6 +46,8 @@ public class DataBaseUtil {
         Connection connection = null;
         String url = "jdbc:mysql://127.0.0.1:3306/" + baseName
                 + "?useUnicode=true&characterEncoding=UTF-8&useSSL=true";
+        String user = "root";
+        String pwd = "Pavilion5556";
         try {
             connection = DriverManager.getConnection(url, user, pwd);
             connection.setAutoCommit(false);//设置手动提交
@@ -60,7 +60,7 @@ public class DataBaseUtil {
     /**
      * 测试连接是否成功
      */
-    public static boolean isConnection () {
+    public static boolean isConnection (Connection conn) {
         if (conn != null) {
             return true;
         } else {
@@ -74,21 +74,21 @@ public class DataBaseUtil {
      */
     public static void createTable (String baseName, String sql) {
 
-        conn = getConnection(baseName);
-        if (!isConnection()) {
+        Connection conn = getConnection(baseName);
+        if (!isConnection(conn)) {
             logger.debug("reconnecting...");
             return;
         } else {
             try {
-                preparedStatement = conn.prepareStatement(sql);//预处理
+                PreparedStatement preparedStatement = conn.prepareStatement(sql);//预处理
                 if (preparedStatement.execute(sql)) {
                     preparedStatement.executeUpdate(sql);//执行
                 }
+                preparedStatement.close();
             } catch (SQLException e) {
                 logger.error("create table failed:\t" + e.getMessage());
             } finally {
                 try {
-                    preparedStatement.close();
                     conn.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -103,9 +103,9 @@ public class DataBaseUtil {
      * @return
      */
     public static boolean exitTable (String baseName, String tableName) {
-        conn = getConnection(baseName);
+        Connection conn = getConnection(baseName);
         boolean flag = false;
-        if (!isConnection()) {
+        if (!isConnection(conn)) {
             logger.warn("reconnecting...");
             return flag;
         } else {
@@ -142,8 +142,8 @@ public class DataBaseUtil {
      * @param data
      */
     public static void insert (String baseName, String tableName, String[] columns, List<String[]> data) {
-        conn = getConnection(baseName);
-        if (!isConnection()) {
+        Connection conn = getConnection(baseName);
+        if (!isConnection(conn)) {
             logger.debug("reconnecting...");
             return;
         } else {
@@ -169,7 +169,7 @@ public class DataBaseUtil {
             //执行(批量)
             try {
                 //预处理SQL,防止注入
-                preparedStatement = conn.prepareStatement(sql.toString());
+                PreparedStatement preparedStatement = conn.prepareStatement(sql.toString());
                 for (int i = 0; i < data.size(); i++) {
                     String[] tmpData = data.get(i);
                     for (int j = 0; j < tmpData.length; j++) {
@@ -178,6 +178,7 @@ public class DataBaseUtil {
                     preparedStatement.addBatch();//加入批量处理
                 }
                 preparedStatement.executeBatch();//执行批量处理
+                preparedStatement.close();
                 conn.commit();//提交
             } catch (SQLException e) {
                 if (conn != null) {
@@ -191,12 +192,7 @@ public class DataBaseUtil {
                 logger.error("add data field:\t" + e.getMessage());
             } finally {
                 try {
-                    if (preparedStatement != null) {
-                        preparedStatement.close();
-                    }
-                    if (conn != null) {
-                        conn.close();
-                    }
+                    conn.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -214,25 +210,25 @@ public class DataBaseUtil {
      * @return
      */
     public static String queryString (String baseName, String tableName, String targetColumn, String offerColumn, String data) {
-        conn = getConnection(baseName);
+        Connection conn = getConnection(baseName);
         //select targetColumn from tablename where offerColumn = 'data';Z
         String sql = "SELECT " + targetColumn + " FROM " + tableName +
                 " WHERE " + offerColumn + "='" + data + "';";
         ResultSet resultSet = null;
         try {
             //预处理
-            preparedStatement = conn.prepareStatement(sql);
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
             if (preparedStatement.execute(sql)) {
                 resultSet = preparedStatement.executeQuery(sql);
                 if (resultSet.next()) {
                     return resultSet.getString(resultSet.getRow());
                 }
             }
+            preparedStatement.close();
         } catch (SQLException e) {
             logger.error("syntax sql");
         } finally {
             try {
-                preparedStatement.close();
                 resultSet.close();
                 conn.close();
             } catch (SQLException e) {
@@ -251,8 +247,8 @@ public class DataBaseUtil {
      * @return
      */
     public static int queryTableSize (String baseName, String tableName, String targetColumn) {
-        conn = getConnection(baseName);
-        if (!isConnection()) {
+        Connection conn = getConnection(baseName);
+        if (!isConnection(conn)) {
             logger.error("connect failed");
             return 0;
         }
@@ -260,7 +256,7 @@ public class DataBaseUtil {
         int count = 0;
         ResultSet set = null;
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
             if (preparedStatement.execute(sql)) {//检验语句是否正确
                 set = preparedStatement.executeQuery(sql);
                 if (set.next()) {//游标调整
@@ -268,11 +264,11 @@ public class DataBaseUtil {
                 }
                 set.close();
             }
+            preparedStatement.close();
         } catch (SQLException e) {
             logger.error("syntax error");
         } finally {
             try {
-                preparedStatement.close();
                 conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -290,15 +286,15 @@ public class DataBaseUtil {
      */
     public static List<String> getList (String baseName, String tableName, String targetColumn) {
         List<String> titleName = new ArrayList<>();
-        conn = getConnection(baseName);
-        if (!isConnection()) {
+        Connection conn = getConnection(baseName);
+        if (!isConnection(conn)) {
             logger.error("connect failed");
             return titleName;
         }
         String sql = "select " + targetColumn + " from " + tableName + ";";
         ResultSet set = null;
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
             if (preparedStatement.execute(sql)) {
                 set = preparedStatement.executeQuery(sql);
                 while (set.next()) {//调整游标位置
@@ -306,11 +302,11 @@ public class DataBaseUtil {
                 }
                 set.close();
             }
+            preparedStatement.close();
         } catch (SQLException e) {
             logger.error("syntax error:" + e.getMessage());
         } finally {
             try {
-                preparedStatement.close();
                 conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -331,35 +327,73 @@ public class DataBaseUtil {
      */
     public static Map<String, String> getUrlList (String baseName, String tableName, String targetColumn1, String targetColumn2) {
         Map<String, String> urlList = new HashMap<>();
-        conn = getConnection(baseName);
-        if (!isConnection()) {
+        Connection conn = getConnection(baseName);
+        if (!isConnection(conn)) {
             logger.error("connect failed");
             return urlList;
         }
         String sql = "select " + targetColumn1 + "," + targetColumn2 + " from " + tableName + ";";
-        System.out.println(sql);
         ResultSet set;
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
             if (preparedStatement.execute(sql)) {
                 set = preparedStatement.executeQuery(sql);
                 while (set.next()) {
-                    urlList.put(set.getString(1),set.getString(2));
+                    urlList.put(set.getString(1), set.getString(2));
                 }
                 set.close();
             }
+            preparedStatement.close();
         } catch (SQLException e) {
-            logger.error("syntax error: " + e.getMessage());
+            logger.error(e.getMessage());
         } finally {
             try {
-                preparedStatement.close();
                 conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-
         return urlList;
     }
+
+    /**
+     * 获取表结构信息
+     *
+     * @param baseName
+     * @param tableName
+     * @return
+     */
+    public static Date[] getTableStatus (String baseName, String tableName) {
+        String sql = "show table status from " + baseName + " like '" + tableName + "';";
+        Connection conn = getConnection(baseName);
+        if (!isConnection(conn)) {
+            logger.error("connect failed");
+            return null;
+        }
+        Date[] dateStatus = new Date[2];
+        ResultSet set = null;
+        try {
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            if (preparedStatement.execute(sql)) {
+                set = preparedStatement.executeQuery(sql);
+                if (set.next()) {
+                    dateStatus[0] = set.getDate("Create_time");
+                    dateStatus[1] = set.getDate("Update_time");
+                }
+                set.close();
+            }
+            preparedStatement.close();
+        } catch (SQLException e) {
+            logger.error(e.getMessage());
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return dateStatus;
+    }
+
 
 }

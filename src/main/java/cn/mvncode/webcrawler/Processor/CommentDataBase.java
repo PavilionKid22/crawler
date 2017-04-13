@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 评论数据输入数据库接口线程
  * Created by Pavilion on 2017/3/21.
  */
 public class CommentDataBase implements Runnable {
@@ -20,6 +21,7 @@ public class CommentDataBase implements Runnable {
     private Logger logger = LoggerFactory.getLogger(CommentDataBase.class.getName());
     private boolean isRunning = true;
 
+    private String baseName = "moviebase";
     private String tableName;
     private ResultItem result;
 
@@ -36,8 +38,7 @@ public class CommentDataBase implements Runnable {
      * @throws SQLException
      */
     public void insertData () throws SQLException {
-
-        if (!DataBaseUtil.exitTable("moviebase", tableName)) {
+        if (!DataBaseUtil.exitTable(baseName, tableName)) {
             String sql = "CREATE TABLE " + tableName + " (" +
                     "UserID char(10) NOT NULL PRIMARY KEY," +
                     "User varchar(128) NOT NULL," +
@@ -46,7 +47,7 @@ public class CommentDataBase implements Runnable {
                     "Date char(40) NOT NULL," +
                     "Comment mediumtext" +
                     ")DEFAULT CHARSET=utf8;";
-            DataBaseUtil.createTable("moviebase", sql);
+            DataBaseUtil.createTable(baseName, sql);
             logger.info("create table " + tableName);
         } else {
             List<String[]> data = new ArrayList<>();//所有数据
@@ -62,7 +63,7 @@ public class CommentDataBase implements Runnable {
             columns[3] = "Star";
             columns[4] = "Date";
             columns[5] = "Comment";
-            DataBaseUtil.insert("moviebase", tableName, columns, data);
+            DataBaseUtil.insert(baseName, tableName, columns, data);
             isRunning = false;
         }
 
@@ -100,10 +101,10 @@ public class CommentDataBase implements Runnable {
             try {
                 insertData();
             } catch (SQLException e) {
-                logger.error("insert data failed");
+                logger.error("update data failed");
             }
         }
-        logger.info("insert comment over");
+        logger.info("update comment over");
 
     }
 

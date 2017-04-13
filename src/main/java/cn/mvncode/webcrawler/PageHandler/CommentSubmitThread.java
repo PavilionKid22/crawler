@@ -6,8 +6,6 @@ import cn.mvncode.webcrawler.Downloadpage.Downloader;
 import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
-import cn.mvncode.webcrawler.ResultItem;
-import cn.mvncode.webcrawler.Utils.CloseUtil;
 import cn.mvncode.webcrawler.Utils.DataBaseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +28,8 @@ public class CommentSubmitThread implements Runnable, Observer {
     private ExecutorService commentHandleService = Executors.newFixedThreadPool(3);//commentHandler线程池
 
     private Map<String, PageCommentHandler> pageCommentHandlerMaps = new HashMap<String, PageCommentHandler>();
+
+    private String baseName = "moviebase";
 
     private CrawlerSet set;
     private Proxy proxy;
@@ -55,9 +55,18 @@ public class CommentSubmitThread implements Runnable, Observer {
      *
      * @return
      */
-    private Map<String, String> getUrlList () {
+    public Map<String, String> getUrlList () {
         Map<String, String> urlList = new HashMap<>();
-        urlList = DataBaseUtil.getUrlList("moviebase", "movie", "Title", "Url");
+        Map<String, String> allUrlList = null;
+        allUrlList = DataBaseUtil
+                .getUrlList(baseName, "movies", "Title", "Url");
+        for (Map.Entry<String, String> entry : allUrlList.entrySet()) {
+            String tmpTableName = "tb_" + entry.getKey();
+            if (!DataBaseUtil.exitTable(baseName, tmpTableName)) {
+                urlList.put(entry.getKey(), entry.getValue());
+            }
+        }
+        CommentPushDatabase.submitThreadCount = urlList.size();
         return urlList;
     }
 
@@ -65,8 +74,9 @@ public class CommentSubmitThread implements Runnable, Observer {
      * 提交任务到线程池
      */
     private void submitThread () {
-
-        for (Map.Entry<String, String> entry : getUrlList().entrySet()) {
+        Map<String, String> urlList = getUrlList();
+        logger.info("submit size is " + urlList.size());
+        for (Map.Entry<String, String> entry : urlList.entrySet()) {
             String title = entry.getKey();
             Request seek = new Request(entry.getValue());
             PageCommentHandler pageCommentHandler = getPageCommentHandler(seek, title);
@@ -75,6 +85,7 @@ public class CommentSubmitThread implements Runnable, Observer {
             CommentFutureTask task = new CommentFutureTask(pageCommentHandler);
             commentHandleService.execute(task);
         }
+        logger.info("submitThread over");
         commentHandleService.shutdown();
     }
 
@@ -108,7 +119,7 @@ public class CommentSubmitThread implements Runnable, Observer {
         boolean flag = false;
         testPage = testDownloader.download(testRequest, set, null);
         if (testPage != null) {
-            if (testPage.getStatusCode() < 300) {
+            if (testPage.getStatusCode() == 200) {
                 flag = true;
             }
             testPage = null;
@@ -121,10 +132,9 @@ public class CommentSubmitThread implements Runnable, Observer {
 
         logger.info("start get comment");
         submitThread();
-        logger.info("submitThread over");
         while (true) {
             if (commentHandleService.isTerminated()) {
-                logger.info("all thread over, exit");
+                logger.info("all submit thread terminated, exit");
                 break;
             }
             if (pauseFlag) {//线程故障处理
@@ -139,7 +149,7 @@ public class CommentSubmitThread implements Runnable, Observer {
                 }
             }
             try {
-                TimeUnit.MILLISECONDS.sleep(3000);//每3秒检测一次
+                TimeUnit.MILLISECONDS.sleep(5000);//每3秒检测一次
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

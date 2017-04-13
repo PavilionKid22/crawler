@@ -11,6 +11,7 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 管理代理线程池
  * Created by Pavilion on 2017/3/23.
  */
 public class GetProxyThread extends Observable implements Runnable {

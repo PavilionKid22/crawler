@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 电影url集输入数据库接口
  * Created by Pavilion on 2017/4/8.
  */
 public class MoviesDataBase implements Runnable {
@@ -22,6 +23,7 @@ public class MoviesDataBase implements Runnable {
     private int beforeUpdate = 0;
     private int afterUpdate = 0;
 
+    private String baseName = "moviebase";
     private String tableName = "movies";
     private ResultItem fields;
 
@@ -34,15 +36,15 @@ public class MoviesDataBase implements Runnable {
      * * @throws SQLException
      */
     public void insertData () throws SQLException {
-        if (!DataBaseUtil.exitTable("moviebase", tableName)) {
+        if (!DataBaseUtil.exitTable(baseName, tableName)) {
             String sql = "CREATE TABLE " + tableName + "(" +
                     "UID char(10) NOT NULL primary key," +
                     "Title varchar(128) NOT NULL," +
                     "Url varchar(128) NOT NULL" +
                     ")DEFAULT CHARSET=utf8;";
-            DataBaseUtil.createTable("moviebase", sql);
+            DataBaseUtil.createTable(baseName, sql);
         } else {
-            beforeUpdate = DataBaseUtil.queryTableSize("moviebase",tableName, "UID");
+            beforeUpdate = DataBaseUtil.queryTableSize(baseName,tableName, "UID");
             List<String[]> data = new ArrayList<>();//所有数据
             for (Map.Entry<String, Object> entry : fields.getFields().entrySet()) {
                 String[] oneData = new String[3];
@@ -56,8 +58,8 @@ public class MoviesDataBase implements Runnable {
             columns[0] = "UID";
             columns[1] = "Title";
             columns[2] = "Url";
-            DataBaseUtil.insert("moviebase",tableName, columns, data);
-            afterUpdate = DataBaseUtil.queryTableSize("moviebase",tableName, "UID");
+            DataBaseUtil.insert(baseName,tableName, columns, data);
+            afterUpdate = DataBaseUtil.queryTableSize(baseName,tableName, "UID");
             isRunning = false;
         }
     }

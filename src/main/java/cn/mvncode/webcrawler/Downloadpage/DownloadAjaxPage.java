@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
+ * 利用phantomjs下载ajax生成的页面
  * Created by Pavilion on 2017/3/24.
  */
 public class DownloadAjaxPage extends Downloader {

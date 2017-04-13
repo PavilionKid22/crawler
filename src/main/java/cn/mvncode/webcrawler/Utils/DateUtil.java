@@ -24,7 +24,17 @@ public class DateUtil {
      * @return
      */
     public static String timeNow () {
-        DateFormat dateFormat = new SimpleDateFormat("yy-MM-dd hh:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        return dateFormat.format(new Date());
+    }
+
+    /**
+     * 返回当前日期
+     *
+     * @return
+     */
+    public static String dateNow () {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         return dateFormat.format(new Date());
     }
 

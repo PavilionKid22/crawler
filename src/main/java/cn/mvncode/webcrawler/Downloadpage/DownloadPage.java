@@ -104,13 +104,14 @@ public class DownloadPage extends Downloader {
         try {
             httpResponse = getResponse(httpClient, httpUriRequest);
         } catch (IOException e) {
+            logger.error(e.getMessage());
             return page;
         }
 
         try {
             page = handleResponse(request, httpResponse, crawlerSet);
         } catch (IOException e) {
-            logger.error("httpResponse failed");
+            logger.error(e.getMessage());
             return page;
         }
 

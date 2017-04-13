@@ -8,6 +8,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 代理
  * Created by Pavilion on 2017/3/16.
  */
 public class Proxy implements Serializable, Delayed {

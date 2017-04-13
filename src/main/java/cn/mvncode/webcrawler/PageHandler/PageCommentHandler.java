@@ -6,6 +6,7 @@ import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
+import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.StatusLine;
 import org.jsoup.Jsoup;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 
 /**
  * 网页解析
+ * 抓取评论
  * Created by Pavilion on 2017/3/16.
  */
 public class PageCommentHandler extends Observable implements Callable<ResultItem>, PageResponseHandler {
@@ -34,6 +36,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
     private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     private boolean isRunning;
+    private boolean flag;
 
     private ResultItem resultItem;
 
@@ -49,6 +52,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
 
     public PageCommentHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader, String name) {
         isRunning = true;
+        flag = false;
         this.seek = seek;
         this.set = set;
         this.proxy = proxy;
@@ -56,7 +60,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
         this.name = name;
         resultItem = new ResultItem();
         resultItem.setTitle(name);
-        set.setDomain(seek.getUrl());
+        set.setDomain(UrlUtils.getDomain(seek.getUrl()));
     }
 
     /**
@@ -65,7 +69,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
      * @return result
      */
     @Override
-    public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader){
+    public ResultItem getHandler (Request seek, CrawlerSet set, Proxy proxy, Downloader downloader) {
         return null;
     }
 
@@ -198,7 +202,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
 
             StatusLine statusLine = page.getHttpResponse().getStatusLine();
             if (statusLine.getStatusCode() >= 300) {
-                break;
+                isRunning = false;
             }
             //格式化html
             Document document = Jsoup.parse(page.getPlainText());
@@ -230,8 +234,13 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
                 synchronized (this) {
                     setChanged();
                     notifyObservers(this);//将该对象传给监听者
+                    flag = true;//挂起标识
                     wait();//挂起线程等待响应
                 }
+            }
+            if (flag) {
+                page = downloader.download(newRequest, set, proxy);//重新点击页面
+                flag = false;
             }
             //检验是否关闭线程
             if (page.getTargetUrls().isEmpty()) {
