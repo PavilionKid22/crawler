@@ -2,6 +2,7 @@ package cn.mvncode.webcrawler.Downloadpage;
 
 import cn.mvncode.webcrawler.CrawlerSet;
 import cn.mvncode.webcrawler.Proxy.Proxy;
+import com.sun.xml.internal.bind.v2.TODO;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.CookieStore;
@@ -150,7 +151,8 @@ public class HttpClientFactory {
 
         //错误恢复机制
         if (crawlerSet != null) {
-            HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
+            HttpRequestRetryHandler retryHandler = new StandardHttpRequestRetryHandler();
+            HttpRequestRetryHandler retryHandlerDIY = new HttpRequestRetryHandler() {
                 @Override
                 public boolean retryRequest (IOException e, int i, HttpContext httpContext) {
                     if (i >= crawlerSet.getRetryTimes()) {
