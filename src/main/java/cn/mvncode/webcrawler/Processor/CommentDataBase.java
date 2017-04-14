@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 public class CommentDataBase implements Runnable {
 
     private Logger logger = LoggerFactory.getLogger(CommentDataBase.class.getName());
-    private boolean isRunning = true;
 
     private String baseName = "moviebase";
     private String tableName;
@@ -38,6 +37,7 @@ public class CommentDataBase implements Runnable {
      * @throws SQLException
      */
     public void insertData () throws SQLException {
+        boolean createFlag = true;
         if (!DataBaseUtil.exitTable(baseName, tableName)) {
             String sql = "CREATE TABLE " + tableName + " (" +
                     "UserID char(10) NOT NULL PRIMARY KEY," +
@@ -47,9 +47,10 @@ public class CommentDataBase implements Runnable {
                     "Date char(40) NOT NULL," +
                     "Comment mediumtext" +
                     ")DEFAULT CHARSET=utf8;";
-            DataBaseUtil.createTable(baseName, sql);
+            createFlag = DataBaseUtil.createTable(baseName, sql);
             logger.info("create table " + tableName);
-        } else {
+        }
+        if (createFlag) {
             List<String[]> data = new ArrayList<>();//所有数据
             for (Map.Entry<String, String> entry : result.getComment().entrySet()) {
                 String[] oneData = getData(entry.getKey(), entry.getValue());
@@ -64,7 +65,6 @@ public class CommentDataBase implements Runnable {
             columns[4] = "Date";
             columns[5] = "Comment";
             DataBaseUtil.insert(baseName, tableName, columns, data);
-            isRunning = false;
         }
 
     }
@@ -97,12 +97,10 @@ public class CommentDataBase implements Runnable {
     @Override
     public void run () {
 
-        while (isRunning) {
-            try {
-                insertData();
-            } catch (SQLException e) {
-                logger.error("update data failed");
-            }
+        try {
+            insertData();
+        } catch (SQLException e) {
+            logger.error("update data failed");
         }
         logger.info("update comment over");
 

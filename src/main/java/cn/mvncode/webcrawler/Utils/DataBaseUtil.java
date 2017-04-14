@@ -72,12 +72,11 @@ public class DataBaseUtil {
     /**
      * 创建表
      */
-    public static void createTable (String baseName, String sql) {
+    public static boolean createTable (String baseName, String sql) {
 
         Connection conn = getConnection(baseName);
         if (!isConnection(conn)) {
-            logger.debug("reconnecting...");
-            return;
+            return false;
         } else {
             try {
                 PreparedStatement preparedStatement = conn.prepareStatement(sql);//预处理
@@ -87,14 +86,15 @@ public class DataBaseUtil {
                 preparedStatement.close();
             } catch (SQLException e) {
                 logger.error("create table failed:\t" + e.getMessage());
-            } finally {
                 try {
                     conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
                 }
+                return false;
             }
         }
+        return true;
     }
 
     /**

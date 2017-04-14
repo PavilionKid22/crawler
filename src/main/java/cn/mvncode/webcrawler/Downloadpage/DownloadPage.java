@@ -95,6 +95,7 @@ public class DownloadPage extends Downloader {
     @Override
     public Page download (Request request, CrawlerSet crawlerSet, Proxy proxy) {
 
+        boolean faultFlag = false;
         Page page = new Page();//防止空指针异常
         //获取请求
         HttpUriRequest httpUriRequest = getHttpUriRequest(request, crawlerSet);
@@ -105,6 +106,7 @@ public class DownloadPage extends Downloader {
             httpResponse = getResponse(httpClient, httpUriRequest);
         } catch (IOException e) {
             logger.error(e.getMessage());
+            faultFlag = true;
         }
 
         try {
@@ -119,6 +121,10 @@ public class DownloadPage extends Downloader {
                     e1.printStackTrace();
                 }
             }
+        }
+        if (faultFlag) {
+            logger.error(request.toString());
+            faultFlag = false;
         }
         return page;
     }

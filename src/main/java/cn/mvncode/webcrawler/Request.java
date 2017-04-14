@@ -103,7 +103,6 @@ public class Request implements Serializable {
         return "Request{" +
                 "url='" + url + '\'' +
                 ", method='" + method + '\'' +
-                ", extras=" + extras +
                 '}';
     }
 

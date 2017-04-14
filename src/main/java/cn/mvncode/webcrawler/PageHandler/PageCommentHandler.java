@@ -229,7 +229,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
                 page = downloader.download(newRequest, set, proxy);//重新点击页面
             }
             //抓取间隔
-            TimeUnit.MILLISECONDS.sleep(new Random().nextInt(3000 - 1000 + 1) + 1000);
+            TimeUnit.MILLISECONDS.sleep(new Random().nextInt(4000 - 1000 + 1) + 1000);
             //检验是否关闭线程
             if (page.getStatusCode() != 200) break;
         }
