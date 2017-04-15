@@ -48,7 +48,7 @@ public class CommentDataBase implements Runnable {
                     "Comment mediumtext" +
                     ")DEFAULT CHARSET=utf8;";
             createFlag = DataBaseUtil.createTable(baseName, sql);
-            logger.info("create table " + tableName);
+            if(createFlag) logger.info("create table " + tableName);
         }
         if (createFlag) {
             List<String[]> data = new ArrayList<>();//所有数据

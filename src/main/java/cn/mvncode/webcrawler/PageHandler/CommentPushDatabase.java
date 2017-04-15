@@ -44,34 +44,19 @@ public class CommentPushDatabase implements Runnable {
             if (updateCommentFlag) {//注册一个线程
                 String databaseTable = "tb_" + tableName;//创建的数据库表以"tb_"开头
                 if (DataBaseUtil.exitTable(baseName, databaseTable)) {//判断表是否存在
-                    //距离上次更新相距一周
-                    Date[] dates = DataBaseUtil.getTableStatus(baseName, databaseTable);
-                    long nowTime = new Date().getTime();
-                    boolean isTime = false;
-                    if (dates[1] != null) {
-                        long updateTime = dates[1].getTime();
-                        if (((nowTime - updateTime) / (1000 * 60 * 60 * 24)) >= 7) isTime = true;
-                    } else {
-                        long createTime = dates[0].getTime();
-                        if (((nowTime - createTime) / (1000 * 60 * 60 * 24)) >= 7) isTime = true;
-                    }
-                    if(isTime){
-                        int beforeUpdateCount =
-                                DataBaseUtil.queryTableSize(baseName, databaseTable, "UserID");
-                        int afterUpdateCount = list.get(tableName).getComment().size();
-                        //更新评论数量应多于50
-                        if (afterUpdateCount - beforeUpdateCount >= 50) {
-                            logger.info(tableName + ": update comment to database");
-                            CommentDataBase commentDataBase = new CommentDataBase(tableName, list.get(tableName));
-                            updateDataBaseService.execute(commentDataBase);
-                        }
-                    }
-                } else {
-                    if (list.get(tableName).getComment().size() != 0) {
+                    int beforeUpdateCount =
+                            DataBaseUtil.queryTableSize(baseName, databaseTable, "UserID");
+                    int afterUpdateCount = list.get(tableName).getComment().size();
+                    //更新评论数量应多于50
+                    if (afterUpdateCount - beforeUpdateCount >= 50) {
                         logger.info(tableName + ": update comment to database");
                         CommentDataBase commentDataBase = new CommentDataBase(tableName, list.get(tableName));
                         updateDataBaseService.execute(commentDataBase);
                     }
+                } else {
+                    logger.info(tableName + ": update comment to database");
+                    CommentDataBase commentDataBase = new CommentDataBase(tableName, list.get(tableName));
+                    updateDataBaseService.execute(commentDataBase);
                 }
                 count++;
                 updateCommentFlag = false;

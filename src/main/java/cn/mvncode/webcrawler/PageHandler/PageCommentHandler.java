@@ -6,6 +6,7 @@ import cn.mvncode.webcrawler.Page;
 import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
+import cn.mvncode.webcrawler.Utils.NetWorkUtil;
 import cn.mvncode.webcrawler.Utils.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.StatusLine;
@@ -180,6 +181,7 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
             Document document = Jsoup.parse(page.getPlainText());//传入参数不能为null,否则会杀死线程
             Elements h2 = document.select("h2");
             if (statusCode == 403 && h2.text().equals(response)) {
+                logger.error("Please Enter Verification Code");
                 return true;
             }
         }
@@ -220,7 +222,6 @@ public class PageCommentHandler extends Observable implements Callable<ResultIte
             page = downloader.download(newRequest, set, proxy);
             //测试网页是否需要人工干预(ip被封)
             if (getError(page)) {
-                logger.error("Please Enter Verification Code");
                 synchronized (this) {
                     setChanged();
                     notifyObservers(this);//将该对象传给监听者

@@ -28,9 +28,8 @@ public class CommentFutureTask extends FutureTask<ResultItem> {
     protected void done () {
         try {
             commentResult = get();
-            if (commentResult.getComment().size() == 0) {
-                logger.error("network error");
-                System.exit(-2);
+            if (commentResult.getComment().size() <= 100) {
+                logger.error("network error: "+ ++CommentSubmitThread.errorCount);
             }
         } catch (InterruptedException e) {
             logger.error("PageCommentHandler execute failed: " + e.getMessage());

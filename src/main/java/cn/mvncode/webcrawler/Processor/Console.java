@@ -10,9 +10,11 @@ import cn.mvncode.webcrawler.Proxy.Proxy;
 import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Utils.CloseUtil;
+import cn.mvncode.webcrawler.Utils.NetWorkUtil;
 
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 线程调度台
@@ -28,6 +30,8 @@ public class Console implements Observer {
     private DownloadPage downloader;
     private GetProxyThread proxyThread;
 
+    private boolean networkThreadFlag;
+
     public Console (CrawlerSet set, Request request, Proxy proxy) {
         this.set = set;
         this.request = request;
@@ -37,7 +41,7 @@ public class Console implements Observer {
     /**
      * 处理逻辑
      */
-    public void process (){
+    public void process () {
 
         //初始化构件
         initComponent();
@@ -81,6 +85,23 @@ public class Console implements Observer {
             new Thread(proxyThread).start();
             proxyThread.addObserver(this);// 该类来观察GetProxyThread实例化线程thread
         }
+        //网络监控
+        networkThreadFlag = true;
+        new Thread(new Runnable() {
+            @Override
+            public void run () {
+                while (networkThreadFlag) {
+                    if (!NetWorkUtil.isConnect()) {
+                        System.exit(-2);//断网超时退出程序
+                    }
+                    try {
+                        TimeUnit.SECONDS.sleep(30);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
     /**
@@ -90,6 +111,7 @@ public class Console implements Observer {
         proxyThread.close();
         CloseUtil.destroyEach(pageListHandler);
         CloseUtil.destroyEach(downloader);
+        networkThreadFlag = false;
     }
 
 

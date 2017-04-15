@@ -35,6 +35,8 @@ public class CommentSubmitThread implements Runnable, Observer {
 
     private String baseName = "moviebase";
 
+    public static int errorCount = 0;
+
     private CrawlerSet set;
     private Proxy proxy;
     private Downloader downloader;
@@ -66,7 +68,20 @@ public class CommentSubmitThread implements Runnable, Observer {
                 .getUrlList(baseName, "movies", "Title", "Url");
         for (Map.Entry<String, String> entry : allUrlList.entrySet()) {
             String tmpTableName = "tb_" + entry.getKey();
-            if (!DataBaseUtil.exitTable(baseName, tmpTableName)) {
+            if (DataBaseUtil.exitTable(baseName, tmpTableName)) {
+                //距离上次更新相距一周
+                Date[] dates = DataBaseUtil.getTableStatus(baseName, tmpTableName);
+                long nowTime = new Date().getTime();
+                boolean isTime = false;
+                if (dates[1] != null) {
+                    long updateTime = dates[1].getTime();
+                    if (((nowTime - updateTime) / (1000 * 60 * 60 * 24)) >= 7) isTime = true;
+                } else {
+                    long createTime = dates[0].getTime();
+                    if (((nowTime - createTime) / (1000 * 60 * 60 * 24)) >= 7) isTime = true;
+                }
+                if (isTime) urlList.put(entry.getKey(), entry.getValue());
+            } else {
                 urlList.put(entry.getKey(), entry.getValue());
             }
         }
@@ -155,6 +170,7 @@ public class CommentSubmitThread implements Runnable, Observer {
                     }
                 }
             }
+            if (errorCount > 10) System.exit(-2);//网络问题终止程序
             try {
                 TimeUnit.MILLISECONDS.sleep(new Random().nextInt(6000 - 4000 + 1) + 4000);//每4到6秒检测一次
             } catch (InterruptedException e) {
