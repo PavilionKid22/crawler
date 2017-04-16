@@ -11,7 +11,10 @@ import cn.mvncode.webcrawler.Request;
 import cn.mvncode.webcrawler.ResultItem;
 import cn.mvncode.webcrawler.Utils.CloseUtil;
 import cn.mvncode.webcrawler.Utils.NetWorkUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +25,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class Console implements Observer {
 
+    private Logger logger = LoggerFactory.getLogger(Console.class.getName());
+
     private CrawlerSet set;
     private Request request;
     private Proxy proxy;
@@ -31,6 +36,9 @@ public class Console implements Observer {
     private GetProxyThread proxyThread;
 
     private boolean networkThreadFlag;
+
+    public static long totalComments = 0;//抓取评论总数
+    public static int tableCount = 0;//更新表总数
 
     public Console (CrawlerSet set, Request request, Proxy proxy) {
         this.set = set;
@@ -102,6 +110,18 @@ public class Console implements Observer {
                 }
             }
         }).start();
+        //jvm中增加一个关闭的钩子
+        long startTime = new Date().getTime();
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run () {
+                long endTime = new Date().getTime();
+                long costTime = (endTime - startTime) / (1000 * 60);//分钟
+                logger.info("update tables: " + tableCount);
+                logger.info("update total comments: " + totalComments);
+                logger.info("total cost: " + costTime + " minutes");
+            }
+        });
     }
 
     /**

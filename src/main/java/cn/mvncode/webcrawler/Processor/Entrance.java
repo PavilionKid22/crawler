@@ -25,7 +25,7 @@ public class Entrance {
         String cookie = getCookie();
 
         CrawlerSet set = CrawlerSet.setDefault().setLaunchProxyPool(false).addCookie("Cookie",cookie);
-        Request request = new Request("https://movie.douban.com/explore#!type=movie&tag=%E7%BB%8F%E5%85%B8&sort=recommend&page_limit=20&page_start=0");
+        Request request = new Request("https://movie.douban.com/explore#!type=movie&tag=%E8%B1%86%E7%93%A3%E9%AB%98%E5%88%86&sort=recommend&page_limit=20&page_start=0");
         new Console(set, request, null).process();
 
     }

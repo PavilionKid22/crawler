@@ -40,7 +40,7 @@ public class CommentDataBase implements Runnable {
         boolean createFlag = true;
         if (!DataBaseUtil.exitTable(baseName, tableName)) {
             String sql = "CREATE TABLE " + tableName + " (" +
-                    "UserID char(10) NOT NULL PRIMARY KEY," +
+                    "UserID char(12) NOT NULL PRIMARY KEY," +
                     "User varchar(128) NOT NULL," +
                     "Vote char(8) NOT NULL," +
                     "Star char(8) NOT NULL," +

@@ -1,5 +1,6 @@
 package cn.mvncode.webcrawler.PageHandler;
 
+import cn.mvncode.webcrawler.Processor.Console;
 import cn.mvncode.webcrawler.ResultItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ public class CommentFutureTask extends FutureTask<ResultItem> {
 
     private ResultItem commentResult = new ResultItem();
 
+    private static int errorCount = 0;
+
     public CommentFutureTask (Callable<ResultItem> callable) {
         super(callable);
     }
@@ -29,7 +32,8 @@ public class CommentFutureTask extends FutureTask<ResultItem> {
         try {
             commentResult = get();
             if (commentResult.getComment().size() <= 100) {
-                logger.error("network error: "+ ++CommentSubmitThread.errorCount);
+                logger.error("network error: " + ++errorCount);
+                if (errorCount > 5) System.exit(-2);//网络问题终止程序
             }
         } catch (InterruptedException e) {
             logger.error("PageCommentHandler execute failed: " + e.getMessage());
@@ -41,6 +45,8 @@ public class CommentFutureTask extends FutureTask<ResultItem> {
             CommentPushDatabase.list.put(commentResult.getTitle(), commentResult);
             CommentPushDatabase.updateCommentFlag = true;
             CommentPushDatabase.tableName = commentResult.getTitle();
+            Console.totalComments += commentResult.getComment().size();
+            Console.tableCount++;
         }
     }
 

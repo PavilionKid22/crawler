@@ -35,8 +35,6 @@ public class CommentSubmitThread implements Runnable, Observer {
 
     private String baseName = "moviebase";
 
-    public static int errorCount = 0;
-
     private CrawlerSet set;
     private Proxy proxy;
     private Downloader downloader;
@@ -170,7 +168,6 @@ public class CommentSubmitThread implements Runnable, Observer {
                     }
                 }
             }
-            if (errorCount > 10) System.exit(-2);//网络问题终止程序
             try {
                 TimeUnit.MILLISECONDS.sleep(new Random().nextInt(6000 - 4000 + 1) + 4000);//每4到6秒检测一次
             } catch (InterruptedException e) {
