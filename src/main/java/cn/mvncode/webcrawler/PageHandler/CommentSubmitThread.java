@@ -35,6 +35,8 @@ public class CommentSubmitThread implements Runnable, Observer {
 
     private String baseName = "moviebase";
 
+    private int count = 0;
+
     private CrawlerSet set;
     private Proxy proxy;
     private Downloader downloader;
@@ -143,6 +145,11 @@ public class CommentSubmitThread implements Runnable, Observer {
                 flag = true;
             }
         }
+        if (count == 900){
+            logger.error("time out");
+            System.exit(-2);
+        }
+        count++;
         return flag;
     }
 
@@ -158,6 +165,7 @@ public class CommentSubmitThread implements Runnable, Observer {
             }
             if (pauseFlag) {//线程故障处理
                 if (checkPage()) {
+                    count = 0;
                     for (int i = 0; i < observableObjs.size(); i++) {
                         Object obj = observableObjs.poll();
                         synchronized (obj) {

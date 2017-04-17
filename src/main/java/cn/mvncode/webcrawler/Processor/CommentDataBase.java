@@ -41,14 +41,14 @@ public class CommentDataBase implements Runnable {
         if (!DataBaseUtil.exitTable(baseName, tableName)) {
             String sql = "CREATE TABLE " + tableName + " (" +
                     "UserID char(12) NOT NULL PRIMARY KEY," +
-                    "User varchar(128) NOT NULL," +
+                    "User varchar NOT NULL," +
                     "Vote char(8) NOT NULL," +
                     "Star char(8) NOT NULL," +
                     "Date char(40) NOT NULL," +
                     "Comment mediumtext" +
                     ")DEFAULT CHARSET=utf8;";
             createFlag = DataBaseUtil.createTable(baseName, sql);
-            if(createFlag) logger.info("create table " + tableName);
+            if (createFlag) logger.info("create table " + tableName);
         }
         if (createFlag) {
             List<String[]> data = new ArrayList<>();//所有数据
@@ -65,6 +65,7 @@ public class CommentDataBase implements Runnable {
             columns[4] = "Date";
             columns[5] = "Comment";
             DataBaseUtil.insert(baseName, tableName, columns, data);
+            logger.info("update table " + tableName);
         }
 
     }

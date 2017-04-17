@@ -31,14 +31,17 @@ public class CommentFutureTask extends FutureTask<ResultItem> {
     protected void done () {
         try {
             commentResult = get();
-            if (commentResult.getComment().size() <= 100) {
+            if (commentResult.getComment().size() < 100) {
                 logger.error("network error: " + ++errorCount);
                 if (errorCount > 5) System.exit(-2);//网络问题终止程序
+                return;
             }
         } catch (InterruptedException e) {
             logger.error("PageCommentHandler execute failed: " + e.getMessage());
+            ++errorCount;
         } catch (ExecutionException e) {
             logger.error("PageCommentHandler execute failed: " + e.getMessage());
+            ++errorCount;
         }
         //同步到数据库推送线程
         synchronized (this) {

@@ -24,10 +24,10 @@ import static org.junit.Assert.*;
  */
 public class CommentDataBaseTest {
     @Test
-    public void insertData () throws Exception {
+    public void test () throws Exception {
 
-        Request request = new Request("https://movie.douban.com/subject/10752547/");
-        String title = "tb_夜色人生";
+        Request request = new Request("https://movie.douban.com/subject/24751763/");
+        String title = "tb_罗曼蒂克消亡史";
         CrawlerSet set = CrawlerSet.setDefault().addCookie("Cookie", getCookie());
         Proxy proxy = null;
         Downloader downloader = new DownloadPage();
@@ -35,8 +35,19 @@ public class CommentDataBaseTest {
         PageCommentHandler pageCommentHandler = new PageCommentHandler(request, set, proxy, downloader, title);
         ResultItem result = pageCommentHandler.call();
 
-        CommentDataBase commentDataBase = new CommentDataBase(title,result);
-        commentDataBase.run();
+        for (Map.Entry<String, String> entry : result.getComment().entrySet()) {
+            System.out.println(entry.getKey() + "\t" + entry.getValue());
+            String[] data = new CommentDataBase(title, result).getData(entry.getKey(), entry.getValue());
+            System.out.println(data.length);
+            for (int i = 0; i < data.length; i++) {
+                System.out.println(data[i]);
+            }
+            System.out.println();
+        }
+
+
+//        CommentDataBase commentDataBase = new CommentDataBase(title,result);
+//        commentDataBase.run();
 
 
     }
